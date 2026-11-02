@@ -36,7 +36,10 @@ export function HomeHeader() {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const measure = () => {
       const hero = document.querySelector<HTMLElement>('[data-hero-screen]');
-      setPastHero(hero ? hero.getBoundingClientRect().bottom <= 0 : window.scrollY > window.innerHeight);
+      // While LandingMotion pins the hero it stays fixed on screen; GSAP's .pin-spacer wrapper keeps its real scroll position.
+      const box = hero?.closest('.pin-spacer') ?? hero;
+      const header = document.querySelector<HTMLElement>('[data-home-header]')?.offsetHeight ?? 0;
+      setPastHero(box ? box.getBoundingClientRect().bottom <= header : window.scrollY > window.innerHeight);
     };
     const scheduleHide = () => {
       clearTimeout(timer);

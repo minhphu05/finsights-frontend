@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { indices, stocks, number, signed } from '@/lib/data';
 import { useWatch } from './shell';
@@ -32,6 +32,9 @@ export default function HomeMarket() {
   const [showFilters, setShowFilters] = useState(false);
   const [adding, setAdding] = useState(false);
   const [addQuery, setAddQuery] = useState('');
+  const root = useRef<HTMLDivElement>(null);
+  // Marks the subtree as hydrated; LandingMotion only animates it after this, since it hydrates later behind Suspense.
+  useEffect(() => { root.current?.setAttribute('data-market', ''); }, []);
   useEffect(() => { setSelected(params.get('ma') || undefined); }, [params]);
   const selectedStock = stocks.find(stock => stock.symbol === selected);
   const current = indices[index];
@@ -53,7 +56,7 @@ export default function HomeMarket() {
   };
 
   return (
-    <div className="text-foreground [--chart-grid:color-mix(in_srgb,var(--color-foreground)_15%,transparent)] [--surface:var(--color-background)]">
+    <div ref={root} className="text-foreground [--chart-grid:color-mix(in_srgb,var(--color-foreground)_15%,transparent)] [--surface:var(--color-background)]">
       <MarketIndices index={index} active={!selectedStock} onSelect={position => { setIndex(position); setSelected(undefined); }} />
 
       <div className="grid gap-10 border-b border-solid border-foreground/20 py-10 lg:grid-cols-[minmax(0,2.8fr)_minmax(240px,1fr)] lg:gap-12">
@@ -77,7 +80,7 @@ export default function HomeMarket() {
         <aside className="min-w-0 lg:border-l lg:border-solid lg:border-foreground/20 lg:pl-10" aria-labelledby="home-watch-title">
           <div className="flex items-center justify-between gap-3"><h3 id="home-watch-title" className="font-editorial text-[28px] font-normal">Đang theo dõi <span className="align-top font-sans text-xs">{watch.length}</span></h3><button className="p-2" aria-label={adding ? 'Đóng thêm cổ phiếu' : 'Thêm cổ phiếu theo dõi'} aria-expanded={adding} onClick={() => setAdding(!adding)}><LineIcon kind={adding ? 'close' : 'search'} /></button></div>
           {adding && <label className="mt-5 block"><span className="sr-only">Tìm mã để theo dõi</span><input className="w-full rounded-xs border border-solid border-foreground/25 bg-transparent p-3 text-xs placeholder:text-foreground/60" placeholder="Tìm mã để theo dõi…" value={addQuery} onChange={event => setAddQuery(event.target.value)} /></label>}
-          <div className="mt-5">
+          <div data-market-watch className="mt-5">
             {(adding ? stocks.filter(stock => `${stock.symbol} ${stock.name}`.toLocaleLowerCase('vi').includes(addQuery.toLocaleLowerCase('vi'))) : saved.slice(0, 5)).map(stock => (
               <div key={stock.symbol} className="flex items-center gap-3 border-b border-solid border-foreground/15 py-4">
                 <button className="min-w-0 flex-1 text-left" onClick={() => chooseStock(stock.symbol)}><strong className="block text-[13px] font-medium">{stock.symbol}</strong><span className="mt-1 block truncate text-[11px] text-foreground/65">{stock.short}</span></button>
@@ -91,7 +94,7 @@ export default function HomeMarket() {
         </aside>
       </div>
 
-      <section className="pt-12 pb-6" aria-labelledby="stocks-title">
+      <section data-market-stocks className="pt-12 pb-6" aria-labelledby="stocks-title">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div><h3 id="stocks-title" className="font-editorial text-[32px] font-normal tracking-[-0.03em]">Khám phá cổ phiếu</h3><p className="mt-2 text-[13px] text-foreground/65">Tìm cơ hội từ những doanh nghiệp bạn hiểu.</p></div>
           <div className="flex w-full gap-2 sm:w-auto"><label className="flex min-w-0 flex-1 items-center gap-3 rounded-xs border border-solid border-foreground/25 px-3 py-2.5"><LineIcon kind="search" /><input className="w-full min-w-0 border-0 bg-transparent text-xs outline-none placeholder:text-foreground/60 sm:w-44" placeholder="Tìm mã, tên công ty…" aria-label="Tìm cổ phiếu trong bảng" value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} /></label><button className={control} aria-expanded={showFilters} onClick={() => setShowFilters(!showFilters)}>Bộ lọc</button></div>
