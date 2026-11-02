@@ -59,11 +59,11 @@ export default function Home() {
           </div>
         </div>
         </div>
-        <section className="bg-background text-foreground" aria-labelledby="fin-news-title">
+        <section className="relative z-10 bg-background text-foreground" aria-labelledby="fin-news-title">
           <div className={`${ui.wrap} grid grid-cols-[.75fr_1.45fr_1.3fr] items-stretch gap-[22px] py-12 max-[1150px]:grid-cols-[.65fr_1.2fr_1.1fr] max-[850px]:grid-cols-[1fr_1.3fr] max-[560px]:flex max-[560px]:flex-col max-[560px]:gap-[25px] max-[560px]:py-[34px]`}>
             <div data-landing-reveal className="flex flex-col items-start py-[35px] max-[1150px]:py-5 max-[850px]:col-span-full max-[850px]:flex-row max-[850px]:flex-wrap max-[850px]:items-center max-[850px]:gap-[22px] max-[850px]:p-0 max-[560px]:grid max-[560px]:gap-3">
               <p className={`${ui.eyebrow} mb-[13px] text-foreground/75 max-[850px]:m-0 max-[560px]:text-[9px]`}>TIN MỚI NHẤT</p>
-              <h2 id="fin-news-title" className="font-editorial text-[clamp(32px,3.2vw,52px)] leading-[1.15] font-normal tracking-[-0.04em] max-[850px]:text-4xl">Latest News</h2>
+              <h2 id="fin-news-title" data-split className="font-editorial text-[clamp(32px,3.2vw,52px)] leading-[1.15] font-normal tracking-[-0.04em] max-[850px]:text-4xl">Latest News</h2>
               <span className="my-[34px] h-px w-12 bg-foreground/50 max-[850px]:hidden" />
               <Link href="/tin-tuc/" className="mt-auto flex items-center gap-3.5 text-[13px] max-[850px]:ml-auto max-[560px]:mt-[5px] max-[560px]:ml-0 max-[560px]:text-xs">Xem tất cả tin tức <LineIcon /></Link>
             </div>
@@ -91,20 +91,20 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="thi-truong" className="bg-background text-foreground">
+        <section id="thi-truong" className="relative z-10 bg-background text-foreground">
           <div className={`${ui.wrap} border-t border-solid border-foreground/20 pt-12 pb-10 md:pt-16 md:pb-14`}>
             <div data-landing-reveal className="flex flex-wrap items-end justify-between gap-5">
-              <div><h2 className={ui.sectionTitle}>Nhịp đập thị trường</h2><p className="mt-3 text-[13px] text-foreground/65">Theo dõi cổ phiếu và khám phá dữ liệu thị trường Việt Nam.</p></div>
+              <div><h2 data-split className={ui.sectionTitle}>Nhịp đập thị trường</h2><p className="mt-3 text-[13px] text-foreground/65">Theo dõi cổ phiếu và khám phá dữ liệu thị trường Việt Nam.</p></div>
               <span className="text-[10px] tracking-wider text-foreground/60 uppercase">Việt Nam · HOSE / HNX / UPCOM</span>
             </div>
             <Suspense fallback={<p className="py-12 text-sm text-foreground/65">Đang mở thị trường…</p>}><HomeMarket /></Suspense>
           </div>
         </section>
 
-        <section className="bg-background text-foreground" aria-labelledby="insights-title">
+        <section className="relative z-10 bg-background text-foreground" aria-labelledby="insights-title">
           <div className={`${ui.wrap} border-t border-solid border-foreground/20 py-12 md:py-16`}>
             <div data-landing-reveal className="mb-8 flex flex-wrap items-end justify-between gap-5">
-              <div><h2 id="insights-title" className={ui.sectionTitle}>Đằng sau những con số</h2><p className="mt-3 text-[13px] text-foreground/65">Những góc nhìn giúp bạn hiểu doanh nghiệp sâu hơn.</p></div>
+              <div><h2 id="insights-title" data-split className={ui.sectionTitle}>Đằng sau những con số</h2><p className="mt-3 text-[13px] text-foreground/65">Những góc nhìn giúp bạn hiểu doanh nghiệp sâu hơn.</p></div>
               <Link className="flex items-center gap-3 text-xs" href="/tin-tuc/">Tất cả bài viết <LineIcon /></Link>
             </div>
             <div className="grid gap-8 md:grid-cols-3">
@@ -121,7 +121,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="ve-finsight" data-scroll-story className="relative bg-ink text-primary md:min-h-[140svh]">
+        <section id="ve-finsight" data-scroll-story className="relative z-10 bg-ink text-primary md:min-h-[140svh]">
           <div className={`${ui.wrap} grid gap-10 py-14 md:sticky md:top-0 md:min-h-svh md:grid-cols-[1.2fr_1fr] md:items-center md:gap-20 md:py-20`}>
             <div><h2 className="font-editorial text-[clamp(36px,4vw,60px)] leading-[1.15] font-normal tracking-[-0.03em]">{['Hiểu', 'thị', 'trường.', 'Mở', 'rộng', 'góc', 'nhìn.'].map((word, position) => <span key={position}>{position === 3 && <br />}<span data-scroll-word>{word}</span>{' '}</span>)}</h2><p className="mt-6 max-w-[45ch] text-[13px] leading-7 text-primary/75">Không chỉ là những con số. Finsight kết nối tin doanh nghiệp, phân tích và dữ liệu thị trường trong một trải nghiệm dễ theo dõi.</p></div>
             <div id="tro-ly" data-landing-reveal className="flex flex-col items-start justify-center border-t border-solid border-primary/25 pt-8 md:border-t-0 md:border-l md:pt-0 md:pl-12">
