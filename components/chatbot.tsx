@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUp, ArrowUpRight, Plus, Sparkles, X } from './icons';
+import { Brand } from './shell';
+import { ArrowUp, ArrowUpRight, Ellipsis, Pencil, PanelLeftClose, PanelLeftOpen, Plus, Sparkles, Trash2 } from './icons';
 import { articles, stocks, number, signed } from '@/lib/data';
 
 type Refs = { stocks: string[]; articles: string[] };
@@ -92,6 +93,11 @@ export default function Chatbot() {
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [menu, setMenu] = useState<{ id: string; top: number; left: number } | null>(null);
+  const [renaming, setRenaming] = useState('');
+  const [renameValue, setRenameValue] = useState('');
+  const popup = useRef<HTMLDivElement>(null);
   const thread = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   const timer = useRef<ReturnType<typeof setInterval>>(undefined);
@@ -108,6 +114,18 @@ export default function Chatbot() {
     if (!loaded) return;
     try { localStorage.setItem(STORE, JSON.stringify(chats.slice(0, 20))); } catch {}
   }, [chats, loaded]);
+
+  useEffect(() => {
+    if (!menu) return;
+    const onDown = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!popup.current?.contains(target) && !target.closest('[data-chat-menu-trigger]')) setMenu(null);
+    };
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setMenu(null); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [menu]);
 
   const active = chats.find(c => c.id === activeId);
   useEffect(() => { thread.current?.scrollTo({ top: thread.current.scrollHeight, behavior: 'smooth' }); }, [active?.messages]);
@@ -147,6 +165,19 @@ export default function Chatbot() {
     }, 16);
   }
 
+  function newChat() {
+    clearInterval(timer.current);
+    setBusy(false);
+    setActiveId('');
+    field.current?.focus();
+  }
+
+  function commitRename(chatId: string) {
+    const title = renameValue.trim();
+    if (title) patch(chatId, c => ({ ...c, title }));
+    setRenaming('');
+  }
+
   function remove(chatId: string) {
     setChats(list => list.filter(c => c.id !== chatId));
     if (chatId === activeId) setActiveId('');
@@ -154,33 +185,74 @@ export default function Chatbot() {
 
   return (
     <div data-home className="h-dvh overflow-hidden bg-background font-sans text-foreground selection:bg-foreground selection:text-background [&_:focus-visible]:outline-foreground motion-reduce:[&_*]:transition-none">
-      <div className="grid h-full grid-cols-1 grid-rows-[auto_minmax(0,1fr)] lg:grid-cols-[272px_minmax(0,1fr)] lg:grid-rows-1">
+      <div className={`grid h-full grid-cols-1 grid-rows-[auto_minmax(0,1fr)] transition-[grid-template-columns] duration-200 lg:grid-rows-1 ${sidebarOpen ? 'lg:grid-cols-[272px_minmax(0,1fr)]' : 'lg:grid-cols-[64px_minmax(0,1fr)]'}`}>
         <div className="flex items-center justify-between border-b border-solid border-foreground/20 px-5 py-4 lg:hidden">
-          <Link className="font-editorial text-xl leading-none tracking-[0.08em]" href="/">FINSIGHT</Link>
-          <Link className="text-xs text-foreground/70 hover:text-foreground" href="/tin-tuc/">Tin tức</Link>
+          <Link href="/" aria-label="Finsight — Trang chủ"><Brand height={32} /></Link>
         </div>
-        <aside className="hidden min-h-0 flex-col border-r border-solid border-foreground/20 lg:flex" aria-label="Lịch sử trò chuyện">
+        <aside className="hidden min-h-0 overflow-hidden border-r border-solid border-foreground/20 lg:block" aria-label="Lịch sử trò chuyện">
+         {!sidebarOpen ? (
+          <div className="flex h-full w-16 flex-col items-center gap-3 pt-6">
+            <button className="group relative grid size-10 place-items-center text-foreground" onClick={() => setSidebarOpen(true)} aria-label="Mở thanh bên">
+              <span className="transition-opacity group-hover:opacity-0 group-focus-visible:opacity-0"><span className="logo-f" style={{ height: 34, width: 24 }} aria-hidden="true" /></span>
+              <PanelLeftOpen size={20} strokeWidth={1.5} className="absolute opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+            </button>
+            <button className="p-2 text-foreground/70 transition-colors hover:text-foreground" onClick={newChat} aria-label="Cuộc trò chuyện mới"><Plus size={18} strokeWidth={1.4} /></button>
+          </div>
+         ) : (
+         <div className="flex h-full w-[272px] flex-col">
           <div className="flex items-center justify-between px-5 pt-6">
-            <Link className="font-editorial text-2xl leading-none tracking-[0.08em]" href="/" aria-label="Finsight — Trang chủ">FINSIGHT</Link>
-            <Link className="text-xs text-foreground/70 hover:text-foreground" href="/tin-tuc/">Tin tức</Link>
+            <Link href="/" aria-label="Finsight — Trang chủ"><Brand height={38} /></Link>
+            <div className="flex items-center gap-3">
+              <button className="p-1.5 text-foreground/70 transition-colors hover:text-foreground" onClick={() => { setSidebarOpen(false); setMenu(null); }} aria-label="Đóng thanh bên"><PanelLeftClose size={18} strokeWidth={1.5} /></button>
+            </div>
           </div>
           <div className="p-5">
-            <button className="flex w-full items-center justify-between gap-3 rounded-xs border border-solid border-foreground/40 px-4 py-3 text-xs transition-colors hover:bg-foreground/10" onClick={() => { clearInterval(timer.current); setBusy(false); setActiveId(''); field.current?.focus(); }}>
+            <button className="flex w-full items-center justify-between gap-3 rounded-xs border border-solid border-foreground/40 px-4 py-3 text-xs transition-colors hover:bg-foreground/10" onClick={newChat}>
               Cuộc trò chuyện mới <Plus size={16} strokeWidth={1.4} />
             </button>
           </div>
           <p className="px-5 pb-2 text-[10px] tracking-wider text-foreground/55 uppercase">Gần đây</p>
-          <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4" data-lenis-prevent>
+          <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4" data-lenis-prevent onScroll={() => setMenu(null)}>
             {chats.length === 0 && <p className="px-3 py-2 text-xs leading-6 text-foreground/55">Chưa có cuộc trò chuyện nào.</p>}
             {chats.map(chat => (
               <div key={chat.id} className={`group flex items-center gap-1 rounded-xs ${chat.id === activeId ? 'bg-foreground/10' : 'hover:bg-foreground/5'}`}>
-                <button className="min-w-0 flex-1 truncate px-3 py-2.5 text-left text-xs text-foreground/90" onClick={() => setActiveId(chat.id)} aria-current={chat.id === activeId}>{chat.title}</button>
-                <button className="p-2 text-foreground/50 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:text-foreground" onClick={() => remove(chat.id)} aria-label={`Xóa cuộc trò chuyện: ${chat.title}`}><X size={14} /></button>
+                {renaming === chat.id ? (
+                  <input
+                    autoFocus
+                    value={renameValue}
+                    onChange={event => setRenameValue(event.target.value)}
+                    onBlur={() => commitRename(chat.id)}
+                    onKeyDown={event => { if (event.key === 'Enter' && !event.nativeEvent.isComposing) commitRename(chat.id); if (event.key === 'Escape') setRenaming(''); }}
+                    aria-label="Tên cuộc trò chuyện"
+                    className="m-1 min-w-0 flex-1 border border-solid border-foreground/40 bg-transparent px-2 py-1.5 text-xs text-foreground outline-none focus:border-foreground"
+                  />
+                ) : (
+                  <button className="min-w-0 flex-1 truncate px-3 py-2.5 text-left text-xs text-foreground/90" onClick={() => setActiveId(chat.id)} aria-current={chat.id === activeId}>{chat.title}</button>
+                )}
+                <button
+                  data-chat-menu-trigger
+                  className={`p-2 text-foreground/50 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 ${menu?.id === chat.id ? 'opacity-100' : 'opacity-0'}`}
+                  onClick={event => {
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    setMenu(current => (current?.id === chat.id ? null : { id: chat.id, top: rect.bottom + 4, left: rect.right - 160 }));
+                  }}
+                  aria-haspopup="menu"
+                  aria-expanded={menu?.id === chat.id}
+                  aria-label={`Tùy chọn cuộc trò chuyện: ${chat.title}`}
+                ><Ellipsis size={16} /></button>
               </div>
             ))}
           </nav>
           <p className="border-t border-solid border-foreground/20 p-5 text-[10px] leading-5 text-foreground/55">Trợ lý thử nghiệm, dùng dữ liệu minh họa. Không phải lời khuyên đầu tư.</p>
+         </div>
+         )}
         </aside>
+        {menu && (
+          <div ref={popup} role="menu" style={{ top: menu.top, left: menu.left }} className="fixed z-20 w-40 border border-solid border-foreground/30 bg-background py-1 shadow-lg">
+            <button role="menuitem" className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-xs transition-colors hover:bg-foreground/10" onClick={() => { const chat = chats.find(c => c.id === menu.id); setRenameValue(chat?.title ?? ''); setRenaming(menu.id); setMenu(null); }}><Pencil size={14} strokeWidth={1.5} /> Đổi tên</button>
+            <button role="menuitem" className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-xs transition-colors hover:bg-foreground/10" onClick={() => { remove(menu.id); setMenu(null); }}><Trash2 size={14} strokeWidth={1.5} /> Xóa</button>
+          </div>
+        )}
 
         <section className="flex min-h-0 min-w-0 flex-col" aria-label="Trò chuyện với trợ lý Finsight">
           <div ref={thread} className="min-h-0 flex-1 overflow-y-auto" data-lenis-prevent>

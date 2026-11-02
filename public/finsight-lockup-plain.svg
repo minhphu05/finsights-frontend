@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="13 10 50.6 38" fill="none">
+  <title>Finsight insights</title>
+  <defs><mask id="finsight-cross" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512"><rect width="512" height="512" fill="#fff"/><path d="M209.4 185 L237.2 201" stroke="#000" stroke-width="30"/></mask></defs>
+  <g transform="translate(14 11) scale(.126) translate(-165 -88)">
+    <g transform="translate(-5 0)" fill="#000" stroke="#000" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+      <path mask="url(#finsight-cross)" d="M180 168 L266.6 118 L249.3 108 L341.9 99.5 L327.2 153 L309.9 143 L193 210.5 L193 315.5 L240.6 343 L240.6 265 L294.3 234 Z"/>
+      <path fill="none" d="M208.6 184.5 L238 201.5"/>
+    </g>
+  </g>
+  <!-- "insights": chữ vẽ tay góc cạnh, nghiêng nhẹ, nét đậm, nhỏ và đặt sát chân chữ F -->
+  <g transform="translate(28.5 41) skewX(-10) scale(0.38)" fill="#000" stroke="#000" stroke-width="3.1" stroke-linejoin="miter" stroke-miterlimit="4" stroke-linecap="butt">
+    <g fill="none"><path transform="translate(0 0)" d="M0 0V-13"/><path transform="translate(4.8 0)" d="M0 0V-13M0 -8.8L4 -13H6.6L9.6 -10V0"/><path transform="translate(19.2 0)" d="M8.8 -11L6.6 -13H3L.8 -10.8V-8.8L3 -6.6H6.2L8.8 -4.4V-2.2L6.6 0H2.4L.2 -2.2"/><path transform="translate(33 0)" d="M0 0V-13"/><path transform="translate(37.8 0)" d="M9 -13H3L0 -10V-3L3 0H9M9 -13V2.5L6 6H2.5L.4 4.2"/><path transform="translate(51.6 0)" d="M0 0V-21M0 -8.8L4 -13H6.6L9.6 -10V0"/><path transform="translate(66 0)" d="M3 -18V-4L5 0H8.6M0 -13H8.6"/><path transform="translate(79.4 0)" d="M8.8 -11L6.6 -13H3L.8 -10.8V-8.8L3 -6.6H6.2L8.8 -4.4V-2.2L6.6 0H2.4L.2 -2.2"/></g>
+    <path transform="translate(0 0)" d="M0 -22L2.6 -19.7L0 -17.4L-2.6 -19.7Z" stroke="none"/><path transform="translate(33 0)" d="M0 -22L2.6 -19.7L0 -17.4L-2.6 -19.7Z" stroke="none"/>
+  </g>
+</svg>

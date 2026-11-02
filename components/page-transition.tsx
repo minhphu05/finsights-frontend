@@ -68,7 +68,7 @@ export default function PageTransition() {
       </div>
       <div ref={mark} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', opacity: 0 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/finsight-mark.svg" alt="" style={{ height: 72, width: 'auto' }} />
+        <img src="/finsight-lockup-cream.svg" alt="" style={{ height: 84, width: 'auto' }} />
       </div>
     </div>
   );

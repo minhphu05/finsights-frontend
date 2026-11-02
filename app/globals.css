@@ -2748,12 +2748,29 @@ main:has(> .sand-band:last-child) + .site-footer {
     display: flex;
   }
 }
-.logo-img {
+.logo-tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  border-radius: 28%;
+  background: #0f0d0c;
+  box-shadow: inset 0 0 0 1px rgba(237, 227, 209, 0.18);
+  color: #ede3d1;
+}
+/* Chữ F của Finsight bản tô đặc (bản viền quá mảnh ở cỡ nhỏ), đổi màu theo currentColor. */
+.logo-f {
   display: block;
   flex: none;
   background: currentColor;
-  -webkit-mask: url('/images/logo.png') center/contain no-repeat;
-  mask: url('/images/logo.png') center/contain no-repeat;
+  -webkit-mask: url('/finsight-mark-solid.svg') center/contain no-repeat;
+  mask: url('/finsight-mark-solid.svg') center/contain no-repeat;
+}
+.logo-plain {
+  display: block;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: url('/finsight-lockup-plain.svg') center/contain no-repeat;
+  mask: url('/finsight-lockup-plain.svg') center/contain no-repeat;
 }
 .brand-mark {
   display: grid;
