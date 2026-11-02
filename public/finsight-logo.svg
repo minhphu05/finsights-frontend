@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <title>Finsight</title>
+  <defs>
+    <!-- Cuts the under-strand where the ribbon crosses itself -->
+    <mask id="finsight-cross" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="#fff"/>
+      <path d="M209.4 185 L237.2 201" stroke="#000" stroke-width="30"/>
+    </mask>
+  </defs>
+
+  <rect width="512" height="512" fill="#0F0D0C"/>
+
+  <g transform="translate(-5 0)" stroke="#EDE3D1" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <!-- F ribbon: arrow head + middle arm + stem -->
+    <path mask="url(#finsight-cross)"
+          d="M180 168 L266.6 118 L249.3 108 L341.9 99.5 L327.2 153 L309.9 143 L193 210.5 L193 315.5 L240.6 343 L240.6 265 L294.3 234 Z"/>
+    <!-- Over-strand at the crossing -->
+    <path d="M208.6 184.5 L238 201.5"/>
+
+    <!-- Rising bars -->
+    <g fill="#EDE3D1" stroke="none">
+      <rect x="302" y="190" width="12" height="34" rx="6"/>
+      <rect x="320" y="172" width="12" height="52" rx="6"/>
+      <rect x="338" y="154" width="12" height="70" rx="6"/>
+    </g>
+  </g>
+
+  <text x="256" y="416" text-anchor="middle" textLength="326" lengthAdjust="spacing"
+        fill="#EDE3D1" font-family="'Montserrat', 'Poppins', 'Segoe UI', Arial, sans-serif"
+        font-size="50" font-weight="500">FINSIGHT</text>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="165 88 190 270" fill="none">
+  <title>Finsight</title>
+  <defs>
+    <mask id="finsight-cross" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="#fff"/>
+      <path d="M209.4 185 L237.2 201" stroke="#000" stroke-width="30"/>
+    </mask>
+  </defs>
+  <g transform="translate(-5 0)" stroke="#EDE3D1" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path mask="url(#finsight-cross)"
+          d="M180 168 L266.6 118 L249.3 108 L341.9 99.5 L327.2 153 L309.9 143 L193 210.5 L193 315.5 L240.6 343 L240.6 265 L294.3 234 Z"/>
+    <path d="M208.6 184.5 L238 201.5"/>
+  </g>
+</svg>

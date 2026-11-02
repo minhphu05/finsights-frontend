@@ -1,0 +1,15 @@
+from pathlib import Path
+
+p = Path('components/market.tsx')
+s = p.read_text(encoding='utf-8')
+s = s.replace('selectedStock?.change||current.percent', '(selectedStock ? selectedStock.change : current.percent)')
+p.write_text(s, encoding='utf-8')
+p = Path('components/shell.tsx')
+s = p.read_text(encoding='utf-8').replace('⌘ K', 'Ctrl K')
+p.write_text(s, encoding='utf-8')
+p = Path('lib/data.ts')
+s = p.read_text(encoding='utf-8').replace("short:'ACB',sector:'Ngân hàng',exchange:'HNX'", "short:'ACB',sector:'Ngân hàng',exchange:'HOSE'")
+p.write_text(s, encoding='utf-8')
+p = Path('app/globals.css')
+s = p.read_text(encoding='utf-8').replace('.header-inner{height:80px;max-width:1440px;', '.header-inner{height:80px;max-width:1376px;')
+p.write_text(s, encoding='utf-8')

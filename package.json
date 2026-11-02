@@ -1,0 +1,29 @@
+{
+  "name": "nep-finance",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "chart.js": "^4.6.1",
+    "lenis": "^1.3.27",
+    "lucide-react": "^1.66.0",
+    "motion": "^14.9.0",
+    "next": "latest",
+    "postcss": "^8.5.31",
+    "react": "latest",
+    "react-dom": "latest",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "playwright-core": "^1.64.1",
+    "typescript": "latest"
+  }
+}
