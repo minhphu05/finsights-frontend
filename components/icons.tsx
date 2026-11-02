@@ -28,4 +28,9 @@ export {
   Clock3,
   CircleHelp,
   SlidersHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Trash2,
+  Ellipsis,
+  Pencil,
 } from 'lucide-react';

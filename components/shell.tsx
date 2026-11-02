@@ -72,19 +72,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
   return <WatchContext.Provider value={{ watch, toggle, ready }}>{children}</WatchContext.Provider>;
 }
-// Logo Turtock: ảnh PNG dùng làm mặt nạ nên đổi màu theo currentColor.
+// Logo Finsight: chữ F kem #EDE3D1 trên ô nền tối, nên nổi rõ ở cả giao diện sáng lẫn tối.
 export function LogoImg({ size = 30 }: { size?: number }) {
-  return <span className="logo-img" style={{ width: size, height: size }} aria-hidden="true" />;
-}
-export function Brand() {
+  const mark = Math.round(size * 0.62);
   return (
-    <span className="brand">
-      <span className="brand-mark">
-        <LogoImg size={26} />
-      </span>
-      <span className="brand-name">Turtock</span>
+    <span className="logo-tile" style={{ width: size, height: size }} aria-hidden="true">
+      <span className="logo-f" style={{ height: mark, width: Math.round(mark * 0.7) }} />
     </span>
   );
+}
+// Logo đầy đủ: chữ F và chữ "insights" (vẽ tay bằng SVG), không nền, lấy màu chữ hiện tại.
+export function Brand({ height = 40 }: { height?: number }) {
+  return <span className="logo-plain" style={{ height, width: Math.round((height * 50.6) / 38) }} aria-hidden="true" />;
 }
 // Thanh biểu tượng bên trái: chuông, cài đặt và giao diện sáng chưa có tính năng nên chỉ hiển thị "Sắp có".
 function SideRail({ pathname }: { pathname: string }) {

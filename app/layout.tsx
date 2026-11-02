@@ -8,7 +8,7 @@ import { AppProvider, Header, Footer } from '@/components/shell';
 
 
 export const metadata: Metadata = {
-  icons: { icon: '/favicon.png' },
+  icons: { icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }, { url: '/favicon.png', type: 'image/png' }] },
   title: { default: 'Turtock — Mai rùa thị trường', template: '%s · Turtock' },
   description:
     'Xem cổ phiếu Việt Nam qua mai rùa VN30 và đọc tin doanh nghiệp được chọn lọc. Bản thiết kế tương tác với dữ liệu minh họa.',

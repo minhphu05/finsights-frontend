@@ -89,7 +89,7 @@ export default function Preloader() {
       <div ref={content} style={{ position: 'absolute', inset: 0, color: '#eadfce' }}>
         <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', alignContent: 'center', gap: 30 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img ref={mark} src="/finsight-mark.svg" alt="" style={{ height: 80, width: 'auto', opacity: 0 }} />
+          <img ref={mark} src="/finsight-lockup-cream.svg" alt="" style={{ height: 90, width: 'auto', opacity: 0 }} />
           <svg width="220" height="132" viewBox="0 0 180 120" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10 108H170" strokeWidth="1" opacity="0.2" />
             <path ref={line} pathLength={1} d="M10 100 L45 80 L70 90 L105 55 L130 65 L158.8 32.5" style={{ strokeDasharray: 1, strokeDashoffset: 1 }} />

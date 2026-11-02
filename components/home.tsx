@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { articles } from '@/lib/data';
 import { homeStyles as ui } from './home-styles';
 import ThemeToggle from './theme-toggle';
+import { Brand } from './shell';
 import { ArrowRight, Menu, Search, Sparkles, X } from './icons';
 
 export function LineIcon({ kind = 'arrow' }: { kind?: 'arrow' | 'search' | 'spark' | 'menu' | 'close' }) {
@@ -80,7 +81,7 @@ export function HomeHeader() {
   return (
     <header data-home-header data-hidden={hidden} onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }} className={`fixed inset-x-0 top-0 z-40 font-sans text-primary will-change-[translate] transition-[translate,background-color,box-shadow] selection:bg-primary selection:text-ink [&_:focus-visible]:outline-primary motion-reduce:transition-none ${pastHero ? 'bg-ink shadow-lg shadow-black/10' : 'bg-transparent'} ${hidden ? '-translate-y-[calc(100%+16px)] pointer-events-none duration-[420ms] ease-[cubic-bezier(0.4,0,0.6,1)]' : 'translate-y-0 duration-[560ms] ease-[cubic-bezier(0.22,1,0.36,1)]'}`}>
       <div className="relative mx-auto flex h-[86px] w-[88%] max-w-[1480px] items-center justify-between gap-9 max-[1150px]:gap-5 max-[560px]:h-[76px] max-[560px]:w-[90%] max-[560px]:gap-3">
-        <Link href="/" className={ui.wordmark} aria-label="Finsight — Trang chủ">{/* eslint-disable-next-line @next/next/no-img-element */}<img src="/finsight-mark.svg" alt="" className="h-[46px] w-auto max-[560px]:h-[40px]" /></Link>
+        <Link href="/" className={ui.wordmark} aria-label="Finsight — Trang chủ"><Brand height={44} /></Link>
         <nav id="home-navigation" className={`items-center gap-[clamp(20px,3vw,54px)] max-[1150px]:gap-5 max-[850px]:absolute max-[850px]:inset-x-0 max-[850px]:top-[75px] max-[850px]:flex-col max-[850px]:items-start max-[850px]:gap-6 max-[850px]:bg-ink max-[850px]:p-6 ${menu ? 'flex' : 'hidden min-[851px]:flex'}`} aria-label="Điều hướng chính">
           {navigation.map(({ href, label }) => (
             <Link key={href} href={href} onClick={() => setMenu(false)} className="flex items-center gap-2 text-xs whitespace-nowrap hover:text-primary/75 min-[851px]:max-[1150px]:text-[10px]">
