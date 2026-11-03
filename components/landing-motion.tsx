@@ -16,7 +16,7 @@ const EASE = 'expo.out';
 export default function LandingMotion() {
   const pathname = usePathname();
   useEffect(() => {
-    if (pathname !== '/') return;
+    if (pathname !== '/' && !pathname.startsWith('/tin-tuc') && !pathname.startsWith('/theo-doi')) return;
     let lenis: Lenis | null = null;
     const animations = new Set<Animation>();
     const media = gsap.matchMedia();
@@ -50,8 +50,10 @@ export default function LandingMotion() {
       gsap.fromTo(progress, { scaleX: 0 }, { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: true } });
 
       // Chapter 0 — hero: pinned while the news section slides over it like a curtain.
+      // Pinning wraps the hero in a spacer, so it must wait until React has hydrated it (news pages hydrate late behind Suspense).
       const hero = document.querySelector<HTMLElement>('[data-hero-screen]');
-      if (hero) {
+      const hydrated = (element: Element) => Object.keys(element).some(key => key.startsWith('__reactFiber$'));
+      const stageHero = (hero: HTMLElement) => {
         if (window.scrollY < 100) {
           hero.querySelectorAll('[data-hero-line]').forEach((line, position) => animate(line, [
             { transform: 'translateY(110%)', opacity: 0 },
@@ -63,10 +65,35 @@ export default function LandingMotion() {
           ], 100 + position * 210, 850));
         }
         // Explicit start values: the intro animations above are still mid-flight when this timeline reads computed styles.
-        gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', pin: true, pinSpacing: false, scrub: true } })
+        const scrub = gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', pin: true, pinSpacing: false, scrub: true } })
           .fromTo(hero.querySelectorAll('[data-hero-line]'), { y: 0, yPercent: 0 }, { yPercent: -115, duration: 0.45, stagger: 0.08 }, 0)
-          .fromTo(hero.querySelectorAll('[data-hero-intro]'), { y: 0, opacity: 1 }, { y: -48, opacity: 0, duration: 0.4, stagger: 0.05 }, 0)
-          .fromTo(hero.querySelectorAll('[data-hero-image]'), { scale: 1.06, filter: 'brightness(1) saturate(0.85)' }, { scale: 1.22, filter: 'brightness(0.35) saturate(0.85)', duration: 1 }, 0);
+          .fromTo(hero.querySelectorAll('[data-hero-intro]'), { y: 0, opacity: 1 }, { y: -48, opacity: 0, duration: 0.4, stagger: 0.05 }, 0);
+        const image = hero.querySelectorAll('[data-hero-image]');
+        // Heroes without a backdrop still keep the same 1-unit scroll length as the home hero.
+        if (image.length) scrub.fromTo(image, { scale: 1.06, filter: 'brightness(1) saturate(0.85)' }, { scale: 1.22, filter: 'brightness(0.35) saturate(0.85)', duration: 1 }, 0);
+        else scrub.set({}, {}, 1);
+      };
+      let heroFrame = 0;
+      const startHero = (hero: HTMLElement) => {
+        const parts = [hero, ...Array.from(hero.querySelectorAll('[data-hero-line], [data-hero-intro]'))];
+        const waitForHero = () => {
+          if (!parts.every(hydrated)) { heroFrame = requestAnimationFrame(waitForHero); return; }
+          context.add(() => stageHero(hero));
+          ScrollTrigger.refresh();
+        };
+        waitForHero();
+      };
+      // The news list renders client-side behind Suspense, so its hero may not exist yet when this effect runs.
+      let heroWatch: MutationObserver | null = null;
+      if (hero) startHero(hero);
+      else {
+        heroWatch = new MutationObserver(() => {
+          const late = document.querySelector<HTMLElement>('[data-hero-screen]');
+          if (!late) return;
+          heroWatch?.disconnect();
+          startHero(late);
+        });
+        heroWatch.observe(document.body, { childList: true, subtree: true });
       }
 
       // Section titles rise word by word out of a mask; padding keeps Vietnamese diacritics inside the clip.
@@ -180,7 +207,7 @@ export default function LandingMotion() {
       resize.observe(document.querySelector('[data-home] main') ?? document.body);
 
       return () => {
-        clearTimeout(refresh); resize.disconnect(); marketWait?.disconnect();
+        cancelAnimationFrame(heroFrame); heroWatch?.disconnect(); clearTimeout(refresh); resize.disconnect(); marketWait?.disconnect();
         restores.forEach(restore => restore());
         gsap.ticker.remove(raf); gsap.ticker.lagSmoothing(500, 33);
         lenis?.destroy(); lenis = null;

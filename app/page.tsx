@@ -125,7 +125,7 @@ export default function Home() {
           <div className={`${ui.wrap} grid gap-10 py-14 md:sticky md:top-0 md:min-h-svh md:grid-cols-[1.2fr_1fr] md:items-center md:gap-20 md:py-20`}>
             <div><h2 className="font-editorial text-[clamp(36px,4vw,60px)] leading-[1.15] font-normal tracking-[-0.03em]">{['Hiểu', 'thị', 'trường.', 'Mở', 'rộng', 'góc', 'nhìn.'].map((word, position) => <span key={position}>{position === 3 && <br />}<span data-scroll-word>{word}</span>{' '}</span>)}</h2><p className="mt-6 max-w-[45ch] text-[13px] leading-7 text-primary/75">Không chỉ là những con số. Finsight kết nối tin doanh nghiệp, phân tích và dữ liệu thị trường trong một trải nghiệm dễ theo dõi.</p></div>
             <div id="tro-ly" data-landing-reveal className="flex flex-col items-start justify-center border-t border-solid border-primary/25 pt-8 md:border-t-0 md:border-l md:pt-0 md:pl-12">
-              <span className="mb-5"><LineIcon kind="spark" /></span><h3 className="font-editorial text-[30px] font-normal">Thêm một góc nhìn cùng AI.</h3><p className="mt-4 mb-6 max-w-[44ch] text-xs leading-6 text-primary/75">Trợ lý Finsight đang được phát triển để đồng hành cùng bạn trong hành trình tìm hiểu thị trường.</p><AssistantButton />
+              <h3 className="font-editorial text-[30px] font-normal">Thêm một góc nhìn cùng AI.</h3><p className="mt-4 mb-6 max-w-[44ch] text-xs leading-6 text-primary/75">Trợ lý Finsight đang được phát triển để đồng hành cùng bạn trong hành trình tìm hiểu thị trường.</p><AssistantButton />
             </div>
           </div>
         </section>
