@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@animate-ui/react": "^2.4.2",
+    "@base-ui/react": "^1.9.0",
     "@tailwindcss/postcss": "^4.3.3",
     "chart.js": "^4.6.1",
     "gsap": "^3.15.0",

@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { articles } from '@/lib/data';
 import { homeStyles as ui } from './home-styles';
+import { NavigationMenu } from '@animate-ui/react/primitives/base-ui/navigation-menu';
+import GoogleLogin from './google-login';
 import ThemeToggle from './theme-toggle';
 import { Brand } from './shell';
-import { ArrowRight, Menu, Search, Sparkles, X } from './icons';
+import { ArrowRight, ChevronDown, Menu, Search, X } from './icons';
 
-export function LineIcon({ kind = 'arrow' }: { kind?: 'arrow' | 'search' | 'spark' | 'menu' | 'close' }) {
-  const Icon = { search: Search, spark: Sparkles, menu: Menu, close: X, arrow: ArrowRight }[kind];
+export function LineIcon({ kind = 'arrow' }: { kind?: 'arrow' | 'search' | 'menu' | 'close' }) {
+  const Icon = { search: Search, menu: Menu, close: X, arrow: ArrowRight }[kind];
   return <Icon size={20} strokeWidth={1.4} className="shrink-0" />;
 }
 
@@ -20,6 +22,22 @@ const navigation = [
   { href: '/tin-tuc/?chu-de=Ph%C3%A2n%20t%C3%ADch', label: 'PHÂN TÍCH' },
   { href: '/#ve-finsight', label: 'INSIGHT' },
 ];
+
+const topics = ['Thị trường', 'Doanh nghiệp', 'Phân tích', 'Góc nhìn', 'Vĩ mô'];
+const dropdowns: Record<string, { href: string; label: string }[]> = {
+  'TIN TỨC': [
+    { href: '/tin-tuc/', label: 'Tất cả tin tức' },
+    ...topics.map(topic => ({ href: `/tin-tuc/?chu-de=${encodeURIComponent(topic)}`, label: topic })),
+  ],
+  'THỊ TRƯỜNG': [
+    { href: '/#thi-truong', label: 'Tổng quan thị trường' },
+    { href: '/#chart-title', label: 'Diễn biến thị trường' },
+    { href: '/#stocks-title', label: 'Khám phá cổ phiếu' },
+    { href: '/theo-doi/', label: 'Danh sách theo dõi' },
+  ],
+};
+const navItem = 'flex items-center gap-2 text-xs whitespace-nowrap hover:text-primary/75 min-[851px]:max-[1150px]:text-[10px]';
+const topicLink = 'flex items-center justify-between gap-4 px-4 py-3 text-xs tracking-wider uppercase hover:bg-primary/10';
 
 export function HomeHeader() {
   const [menu, setMenu] = useState(false);
@@ -85,12 +103,42 @@ export function HomeHeader() {
     <header data-home-header data-hidden={hidden} onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }} className={`fixed inset-x-0 top-0 z-40 font-sans text-primary will-change-[translate] transition-[translate,background-color,box-shadow] selection:bg-primary selection:text-ink [&_:focus-visible]:outline-primary motion-reduce:transition-none ${pastHero ? 'bg-ink shadow-lg shadow-black/10' : 'bg-transparent'} ${hidden ? '-translate-y-[calc(100%+16px)] pointer-events-none duration-[420ms] ease-[cubic-bezier(0.4,0,0.6,1)]' : 'translate-y-0 duration-[560ms] ease-[cubic-bezier(0.22,1,0.36,1)]'}`}>
       <div className="relative mx-auto flex h-[86px] w-[88%] max-w-[1480px] items-center justify-between gap-9 max-[1150px]:gap-5 max-[560px]:h-[76px] max-[560px]:w-[90%] max-[560px]:gap-3">
         <Link href="/" className={ui.wordmark} aria-label="Finsight — Trang chủ"><Brand height={44} /></Link>
-        <nav id="home-navigation" className={`items-center gap-[clamp(20px,3vw,54px)] max-[1150px]:gap-5 max-[850px]:absolute max-[850px]:inset-x-0 max-[850px]:top-[75px] max-[850px]:flex-col max-[850px]:items-start max-[850px]:gap-6 max-[850px]:bg-ink max-[850px]:p-6 ${menu ? 'flex' : 'hidden min-[851px]:flex'}`} aria-label="Điều hướng chính">
+        <NavigationMenu.Root className="max-[850px]:hidden" aria-label="Điều hướng chính">
+          <NavigationMenu.List className="m-0 flex list-none items-center gap-[clamp(20px,3vw,54px)] p-0 max-[1150px]:gap-5 [&>li]:list-none">
+            {navigation.map(({ href, label }) => (
+              <NavigationMenu.Item key={href}>
+                {dropdowns[label] ? (
+                  <>
+                    <NavigationMenu.Trigger className={`${navItem} group cursor-pointer`}>
+                      {label}
+                      <ChevronDown size={14} strokeWidth={1.6} aria-hidden="true" className="transition-transform duration-300 group-data-[popup-open]:rotate-180 motion-reduce:transition-none" />
+                    </NavigationMenu.Trigger>
+                    <NavigationMenu.Content className="w-[260px] p-2">
+                      {dropdowns[label].map(item => (
+                        <NavigationMenu.Link key={item.href} render={<Link href={item.href} />} className={topicLink}>{item.label}</NavigationMenu.Link>
+                      ))}
+                    </NavigationMenu.Content>
+                  </>
+                ) : (
+                  <NavigationMenu.Link render={<Link href={href} />} className={navItem}>
+                    {label}
+                  </NavigationMenu.Link>
+                )}
+              </NavigationMenu.Item>
+            ))}
+          </NavigationMenu.List>
+          <NavigationMenu.Portal>
+            <NavigationMenu.Positioner sideOffset={10} className="z-50">
+              <NavigationMenu.Popup className="h-(--popup-height) w-(--popup-width) overflow-hidden bg-ink font-sans text-primary shadow-xl shadow-black/25 outline-none">
+                <NavigationMenu.Viewport />
+              </NavigationMenu.Popup>
+            </NavigationMenu.Positioner>
+          </NavigationMenu.Portal>
+        </NavigationMenu.Root>
+        <nav id="home-navigation" className={`absolute inset-x-0 top-[75px] flex-col items-start gap-6 bg-ink p-6 min-[851px]:hidden ${menu ? 'flex' : 'hidden'}`} aria-label="Điều hướng chính">
           {navigation.map(({ href, label }) => (
-            <Link key={href} href={href} onClick={() => setMenu(false)} className="flex items-center gap-2 text-xs whitespace-nowrap hover:text-primary/75 min-[851px]:max-[1150px]:text-[10px]">
+            <Link key={href} href={href} onClick={() => setMenu(false)} className="flex items-center gap-2 text-xs whitespace-nowrap hover:text-primary/75">
               {label}
-              {label === 'TIN TỨC' && <span aria-hidden="true">⌄</span>}
-              {label === 'CHATBOT' && <LineIcon kind="spark" />}
             </Link>
           ))}
         </nav>
@@ -100,7 +148,7 @@ export function HomeHeader() {
             <LineIcon kind={search ? 'close' : 'search'} />
           </button>
           <Link className="border-l border-solid border-primary/30 pl-6 hover:text-primary/75 max-[1150px]:pl-3.5 max-[560px]:hidden" href="/theo-doi/">Theo dõi</Link>
-          <Link className={`${ui.primaryButton} rounded-xs px-6 py-[11px] whitespace-nowrap max-[560px]:px-3 max-[560px]:py-[9px] max-[560px]:text-[10px] max-[400px]:hidden`} href="/tin-tuc/">Khám phá</Link>
+          <GoogleLogin />
           <button className="flex min-h-10 min-w-8 items-center justify-center min-[851px]:hidden" aria-label={menu ? 'Đóng menu' : 'Mở menu'} aria-expanded={menu} aria-controls="home-navigation" onClick={() => setMenu(!menu)}>
             <LineIcon kind={menu ? 'close' : 'menu'} />
           </button>
@@ -135,11 +183,10 @@ export function AssistantButton({ floating = false }: { floating?: boolean }) {
         ? 'fixed right-7 bottom-7 z-35 grid size-14 place-items-center rounded-xs border border-solid border-primary/50 bg-ink text-primary shadow-lg shadow-black/20 hover:bg-neutral-800 max-[560px]:right-[18px] max-[560px]:bottom-[18px] max-[560px]:size-[50px]'
         : `${ui.button} ${ui.outlineButton}`}
         aria-label="Trò chuyện với AI" onClick={() => dialog.current?.showModal()}>
-        <LineIcon kind="spark" />{!floating && 'Trò chuyện với AI'}
+        {!floating && 'Trò chuyện với AI'}
       </button>
       <dialog ref={dialog} className="w-[90vw] max-w-[440px] border-0 bg-ink p-10 font-sans text-primary backdrop:bg-black/60">
         <button className="absolute top-[15px] right-[15px] p-2" aria-label="Đóng" onClick={() => dialog.current?.close()}><LineIcon kind="close" /></button>
-        <LineIcon kind="spark" />
         <h2 className="mt-[18px] font-editorial text-[30px] font-normal">Trợ lý Finsight</h2>
         <p className="mt-[18px] mb-6 leading-[1.8] text-primary/80">Trợ lý AI đang được phát triển. Trong lúc chờ, khám phá các bài phân tích và theo dõi doanh nghiệp bạn quan tâm.</p>
         <Link href="/tin-tuc/" className={`${ui.button} ${ui.primaryButton}`}>Đọc bài phân tích <LineIcon /></Link>

@@ -60,10 +60,12 @@ export default function News() {
       <main>
         <section data-hero-screen className="bg-ink text-primary" aria-labelledby="news-title">
           <div className={`${ui.wrap} pt-[150px] pb-10 max-[560px]:pt-[120px]`}>
-            <p className={`${ui.eyebrow} mb-5 text-primary/80 max-[560px]:text-[9px] max-[560px]:tracking-[0.19em]`}>BẢN TIN FINSIGHT × NỘI DUNG MINH HỌA</p>
-            <h1 id="news-title" className="max-w-[760px] font-editorial text-[clamp(38px,3.55vw,60px)] leading-[1.15] font-normal tracking-[-0.035em] max-[560px]:text-[clamp(32px,8vw,42px)]">Đằng sau những con số.</h1>
-            <p className="mt-6 max-w-[640px] font-editorial text-[17px] leading-[1.65] text-primary/85 max-[560px]:text-[15px]">Những câu chuyện, bối cảnh và góc nhìn về thị trường.</p>
-            <div className="mt-10 flex flex-wrap items-end justify-between gap-6 border-t border-solid border-primary/25 pt-5">
+            <p data-hero-intro className={`${ui.eyebrow} mb-5 text-primary/80 max-[560px]:text-[9px] max-[560px]:tracking-[0.19em]`}>BẢN TIN FINSIGHT × NỘI DUNG MINH HỌA</p>
+            <h1 id="news-title" className="max-w-[760px] font-editorial text-[clamp(38px,3.55vw,60px)] leading-[1.15] font-normal tracking-[-0.035em] max-[560px]:text-[clamp(32px,8vw,42px)]">
+              <span className="block overflow-hidden py-[0.08em] -my-[0.08em]"><span data-hero-line className="block">Đằng sau những con số.</span></span>
+            </h1>
+            <p data-hero-intro className="mt-6 max-w-[640px] font-editorial text-[17px] leading-[1.65] text-primary/85 max-[560px]:text-[15px]">Những câu chuyện, bối cảnh và góc nhìn về thị trường.</p>
+            <div data-hero-intro className="mt-10 flex flex-wrap items-end justify-between gap-6 border-t border-solid border-primary/25 pt-5">
               <div className="-mx-2 flex max-w-full min-w-0 gap-1 overflow-x-auto" aria-label="Chủ đề tin tức">
                 {categories.map((c) => (
                   <button
@@ -107,7 +109,7 @@ export default function News() {
 
         {featured ? (
           <>
-            <section className="bg-background text-foreground" aria-labelledby="news-featured-title">
+            <section className="relative z-10 bg-background text-foreground" aria-labelledby="news-featured-title">
               <div className={`${ui.wrap} grid items-center gap-10 py-12 md:grid-cols-[1.25fr_1fr] md:gap-14 md:py-16`}>
                 <Link href={`/tin-tuc/${featured.slug}/`} className="group block aspect-[16/10] overflow-hidden">
                   <img className="h-full w-full object-cover saturate-[0.85] transition-transform duration-400 group-hover:scale-[1.025] motion-reduce:transition-none" src={featured.image} alt="Kiến trúc văn phòng và không gian doanh nghiệp" fetchPriority="high" />
@@ -140,7 +142,7 @@ export default function News() {
               </div>
             </section>
 
-            <section className="bg-background text-foreground" aria-labelledby="news-feed-title">
+            <section className="relative z-10 bg-background text-foreground" aria-labelledby="news-feed-title">
               <div className={`${ui.wrap} grid gap-12 border-t border-solid border-foreground/20 py-12 md:py-16 lg:grid-cols-[1fr_320px] lg:gap-16`}>
                 <div>
                   <div className="flex flex-wrap items-end justify-between gap-5">
@@ -195,8 +197,7 @@ export default function News() {
 
                 <aside className="flex flex-col gap-10">
                   <section className="bg-ink p-8 text-primary" aria-labelledby="news-watch-title">
-                    <LineIcon kind="spark" />
-                    <h2 id="news-watch-title" className="mt-5 font-editorial text-[28px] leading-tight font-normal tracking-[-0.02em]">Cùng một góc nhìn.</h2>
+                    <h2 id="news-watch-title" className="font-editorial text-[28px] leading-tight font-normal tracking-[-0.02em]">Cùng một góc nhìn.</h2>
                     <p className="mt-3 mb-6 text-xs leading-6 text-primary/75">Kết nối tin tức với doanh nghiệp bạn quan tâm.</p>
                     <Link href="/theo-doi/" className={`${ui.button} ${ui.outlineButton}`}>
                       Danh sách theo dõi <LineIcon />
@@ -236,7 +237,7 @@ export default function News() {
             </section>
           </>
         ) : (
-          <section className="bg-background text-foreground">
+          <section className="relative z-10 bg-background text-foreground">
             <div className={`${ui.wrap} flex flex-col items-start gap-5 py-16 md:py-24`}>
               <Search size={34} strokeWidth={1.2} />
               <h2 className={ui.sectionTitle}>Chưa có tin phù hợp.</h2>
