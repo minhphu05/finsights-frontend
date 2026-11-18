@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Search, X } from '@/components/icons';
-import { stocks, number, signed } from '@/lib/data';
+import { number, signed } from '@/lib/data';
 import { useWatch } from './shell';
 import { homeStyles as ui } from './home-styles';
 import { LineIcon } from './home';
@@ -12,7 +12,7 @@ const activeControl = 'rounded-xs border border-solid border-foreground bg-ink p
 const positive = (value: number) => value < 0 ? 'text-red-800 dark:text-red-300' : value > 0 ? 'text-emerald-800 dark:text-emerald-300' : 'text-foreground/65';
 
 export default function Watchlist() {
-  const { watch, toggle } = useWatch();
+  const { watch, toggle, stocks, loading, dataError } = useWatch();
   const [query, setQuery] = useState('');
   const saved = stocks.filter((s) => watch.includes(s.symbol));
   const matches = stocks
@@ -29,7 +29,7 @@ export default function Watchlist() {
             </h1>
             <p data-hero-intro className="mt-6 max-w-[640px] font-editorial text-[17px] leading-[1.65] text-primary/85 max-[560px]:text-[15px]">Lưu những mã cổ phiếu bạn muốn theo dõi, xem nhanh giá, biến động và tin tức liên quan.</p>
             <p data-hero-intro className="mt-10 border-t border-solid border-primary/25 pt-5 text-[11px] text-primary/70">
-              {watch.length} mã đang theo dõi <span className="mx-2">·</span> Dữ liệu minh họa
+              {loading ? 'Đang tải dữ liệu thị trường…' : `${watch.length} mã đang theo dõi`}
             </p>
           </div>
         </section>
@@ -38,7 +38,7 @@ export default function Watchlist() {
           <div className={`${ui.wrap} grid gap-12 py-12 md:py-16 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-16`}>
             <div>
               <h2 id="watch-list-title" className={ui.sectionTitle}>Danh sách của bạn</h2>
-              <p className="mt-3 text-[13px] text-foreground/65">{saved.length ? `${saved.length} doanh nghiệp bạn đã lưu.` : 'Bạn chưa lưu doanh nghiệp nào.'}</p>
+              <p className="mt-3 text-[13px] text-foreground/65">{dataError || (saved.length ? `${saved.length} doanh nghiệp bạn đã lưu.` : loading ? 'Đang tải danh sách cổ phiếu…' : 'Bạn chưa lưu doanh nghiệp nào.')}</p>
               {saved.length ? (
                 <div className="mt-8 overflow-x-auto">
                   <table className="w-full min-w-[620px] border-collapse text-left text-xs tabular-nums">

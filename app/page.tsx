@@ -1,20 +1,15 @@
+'use client';
+
 import { Suspense } from 'react';
 import Link from 'next/link';
 import HomeMarket from '@/components/home-market';
 import { AssistantButton, LineIcon } from '@/components/home';
 import { homeStyles as ui } from '@/components/home-styles';
-import { articles } from '@/lib/data';
-
-export const metadata = { title: 'Finsight — Tin tức và góc nhìn tài chính' };
-const indices = [
-  ['VNINDEX', '1,283.65', '+0.72%'],
-  ['HNXINDEX', '244.12', '+0.53%'],
-  ['S&P 500', '6,723.48', '+0.41%'],
-  ['DOW', '47,061.28', '−0.08%'],
-  ['NASDAQ', '21,448.53', '+0.92%'],
-];
+import { number, signed } from '@/lib/data';
+import { useAppData } from '@/components/shell';
 
 export default function Home() {
+  const { articles, indices, stocks, loading, dataError } = useAppData();
   const [lead, ...rest] = articles;
   return (
     <div data-home className="bg-ink font-sans text-primary selection:bg-primary selection:text-ink [&_:focus-visible]:outline-primary motion-reduce:[&_*]:transition-none">
@@ -40,17 +35,21 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="flex h-14 shrink-0 items-stretch border-y border-solid border-primary/30 bg-neutral-900 text-primary" aria-label="Chỉ số thị trường minh họa">
+        <div className="flex h-14 shrink-0 items-stretch border-y border-solid border-primary/30 bg-neutral-900 text-primary" aria-label="Chỉ số thị trường">
           <div className="relative z-10 flex w-[220px] shrink-0 flex-col justify-center border-r border-solid border-primary/30 bg-neutral-900 pl-8 text-xs leading-[1.4] max-[560px]:w-[136px] max-[560px]:pl-4 max-[560px]:text-[10px]">
-            Thị trường hôm nay <small className="mt-1 text-[9px] text-primary/70">Dữ liệu minh họa</small>
+            Thị trường hôm nay <small className="mt-1 text-[9px] text-primary/70">{(indices[0]?.quoteAt || stocks[0]?.quoteAt) ? new Date(indices[0]?.quoteAt || stocks[0]?.quoteAt || 0).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : loading ? 'Đang tải dữ liệu' : 'Chưa cập nhật'}</small>
           </div>
           <div className="group min-w-0 flex-1 overflow-hidden motion-reduce:overflow-x-auto">
             <div data-market-loop className="flex w-max animate-market-loop group-hover:[animation-play-state:paused] group-focus-within:[animation-play-state:paused] motion-reduce:animate-none">
               {[0, 1].map(copy => (
                 <div key={copy} aria-hidden={copy === 1 ? true : undefined} className={`flex h-14 min-w-[max(1100px,calc(100vw-220px))] shrink-0 items-center justify-around gap-12 px-6 ${copy === 1 ? 'motion-reduce:hidden' : ''}`}>
-                  {indices.map(([name, value, change]) => (
-                    <a href="#thi-truong" tabIndex={copy === 1 ? -1 : undefined} key={name} className="flex shrink-0 items-center justify-center gap-3.5 text-[11px] whitespace-nowrap tabular-nums">
-                      <strong className="font-medium">{name}</strong><span>{value}</span><span className={change.startsWith('−') ? 'text-red-300' : 'text-green-300'}>{change}</span>
+                  {indices.length ? indices.map((item) => (
+                    <a href="#thi-truong" tabIndex={copy === 1 ? -1 : undefined} key={item.symbol} className="flex shrink-0 items-center justify-center gap-3.5 text-[11px] whitespace-nowrap tabular-nums">
+                      <strong className="font-medium">{item.name}</strong><span>{number(item.value, 2)}</span><span className={item.percent < 0 ? 'text-red-300' : 'text-green-300'}>{signed(item.percent)}%</span>
+                    </a>
+                  )) : stocks.slice(0, 6).map((stock) => (
+                    <a href="#thi-truong" tabIndex={copy === 1 ? -1 : undefined} key={stock.symbol} className="flex shrink-0 items-center justify-center gap-3.5 text-[11px] whitespace-nowrap tabular-nums">
+                      <strong className="font-medium">{stock.symbol}</strong><span>{number(stock.price)}</span><span className={stock.change < 0 ? 'text-red-300' : 'text-green-300'}>{signed(stock.change)}%</span>
                     </a>
                   ))}
                 </div>
@@ -67,23 +66,23 @@ export default function Home() {
               <span className="my-[34px] h-px w-12 bg-foreground/50 max-[850px]:hidden" />
               <Link href="/tin-tuc/" className="mt-auto flex items-center gap-3.5 text-[13px] max-[850px]:ml-auto max-[560px]:mt-[5px] max-[560px]:ml-0 max-[560px]:text-xs">Xem tất cả tin tức <LineIcon /></Link>
             </div>
-            <Link data-landing-reveal="image" href={`/tin-tuc/${lead.slug}/`} className="group relative min-h-[290px] overflow-hidden text-primary max-[560px]:min-h-[300px]">
-              <img className="absolute h-full w-full object-cover saturate-[0.85] transition-transform duration-400 group-hover:scale-[1.025] motion-reduce:transition-none" src={lead.image} alt="Khu tài chính giữa những tòa nhà cao tầng" />
+            {lead ? <Link data-landing-reveal="image" href={`/tin-tuc/${lead.slug}/`} className="group relative min-h-[290px] overflow-hidden text-primary max-[560px]:min-h-[300px]">
+              {lead.image ? <img className="absolute h-full w-full object-cover saturate-[0.85] transition-transform duration-400 group-hover:scale-[1.025] motion-reduce:transition-none" src={lead.image} alt="" /> : <div className="absolute inset-0 bg-gradient-to-br from-emerald-950 via-neutral-800 to-neutral-950" />}
               <div className="absolute inset-0 bg-[linear-gradient(transparent_15%,#000d)]" />
               <div className="absolute right-[25px] bottom-5 left-[25px]">
                 <span className="mb-[30px] block text-[10px] uppercase">{lead.category}</span>
                 <h3 className="font-editorial text-[clamp(23px,2vw,34px)] leading-[1.2] font-normal group-hover:underline group-hover:underline-offset-4 max-[560px]:text-[28px]">{lead.title}</h3>
-                <p className="mt-4 text-[11px] text-primary/80">{lead.time} <span className="mx-2">·</span> {lead.read}</p>
+                <p className="mt-4 text-[11px] text-primary/80">{lead.time} <span className="mx-2">·</span> {lead.sourceName}</p>
               </div>
-            </Link>
+            </Link> : <div className="grid min-h-[290px] place-items-center border border-primary/20 p-8 text-sm text-primary/75 max-[560px]:min-h-[220px]">{loading ? 'Đang tải tin tức…' : dataError || 'Chưa có tin mới.'}</div>}
             <div className="grid grid-rows-2 gap-[22px]">
               {rest.slice(0, 2).map(article => (
                 <Link data-landing-reveal="row" className="group grid grid-cols-[44%_1fr] items-center gap-[23px] max-[1150px]:grid-cols-[38%_1fr] max-[1150px]:gap-3.5 max-[560px]:gap-[18px]" href={`/tin-tuc/${article.slug}/`} key={article.slug}>
-                  <img className="h-full max-h-[145px] min-h-[125px] w-full object-cover saturate-[0.85] max-[850px]:min-h-[120px] max-[560px]:max-h-[135px]" src={article.image} alt="" />
+                  {article.image ? <img className="h-full max-h-[145px] min-h-[125px] w-full object-cover saturate-[0.85] max-[850px]:min-h-[120px] max-[560px]:max-h-[135px]" src={article.image} alt="" /> : <div className="h-full max-h-[145px] min-h-[125px] w-full bg-foreground/10 max-[850px]:min-h-[120px] max-[560px]:max-h-[135px]" />}
                   <div>
                     <span className="text-[9px] tracking-[0.08em] uppercase">{article.category}</span>
                     <h3 className="mt-1.5 font-editorial text-[clamp(16px,1.25vw,21px)] leading-[1.35] font-normal group-hover:underline group-hover:underline-offset-4 max-[1150px]:text-base max-[560px]:text-[19px]">{article.title}</h3>
-                    <p className="mt-[18px] text-[11px] text-foreground/70">{article.time} <span className="mx-2">·</span> {article.read}</p>
+                    <p className="mt-[18px] text-[11px] text-foreground/70">{article.time} <span className="mx-2">·</span> {article.sourceName}</p>
                   </div>
                 </Link>
               ))}
@@ -110,8 +109,8 @@ export default function Home() {
             <div className="grid gap-8 md:grid-cols-3">
               {articles.slice(3, 6).map(article => (
                 <Link data-landing-reveal key={article.slug} href={`/tin-tuc/${article.slug}/`} className="group">
-                  <div className="aspect-[16/10] overflow-hidden"><img data-scroll-image className="h-full w-full object-cover saturate-[0.85] transition-transform duration-300 group-hover:scale-[1.025]" src={article.image} alt="" loading="lazy" /></div>
-                  <div className="mt-5 flex items-center justify-between gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{article.category}</span><span>{article.read}</span></div>
+                  <div className="aspect-[16/10] overflow-hidden">{article.image ? <img data-scroll-image className="h-full w-full object-cover saturate-[0.85] transition-transform duration-300 group-hover:scale-[1.025]" src={article.image} alt="" loading="lazy" /> : <div className="h-full w-full bg-foreground/10" />}</div>
+                  <div className="mt-5 flex items-center justify-between gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{article.category}</span><span>{article.sourceName}</span></div>
                   <h3 className="mt-3 font-editorial text-[25px] leading-snug font-normal tracking-[-0.02em] group-hover:underline group-hover:underline-offset-4">{article.title}</h3>
                   <p className="mt-3 text-xs leading-relaxed text-foreground/65">{article.description}</p>
                   <span className="mt-5 flex items-center gap-3 text-xs">Đọc bài viết <LineIcon /></span>
@@ -133,7 +132,7 @@ export default function Home() {
       <footer className={`${ui.wrap} flex items-center gap-[35px] border-t border-solid border-primary/30 py-[30px] text-[11px] text-primary/80 max-[850px]:flex-wrap max-[560px]:gap-[18px] max-[560px]:pb-[85px]`}>
         <Link className="mr-auto font-editorial text-2xl leading-none tracking-[0.08em] text-primary" href="/">FINSIGHT</Link>
         <span>© 2026 Finsight</span>
-        <p className="max-[850px]:w-full">Dữ liệu và bài viết minh họa. Trợ lý AI đang phát triển.</p>
+        <p className="max-[850px]:w-full">Dữ liệu thị trường và tin tức được cập nhật từ các nguồn đã thu thập.</p>
       </footer>
       <AssistantButton floating />
     </div>

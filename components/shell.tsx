@@ -17,24 +17,82 @@ import {
   Settings,
   Sun,
 } from '@/components/icons';
-import { stocks, number, signed } from '@/lib/data';
+import { number, signed, type Stock } from '@/lib/data';
+import { changeWatchlist, getWatchlist, listAllStocks, listIndices, listNews, AUTH_STORAGE_KEY, type APIArticle, type MarketIndex } from '@/lib/api';
 
-const WatchContext = createContext<{
+type AppData = {
+  stocks: Stock[];
+  indices: MarketIndex[];
+  articles: APIArticle[];
+  loading: boolean;
+  dataError: string | null;
   watch: string[];
   toggle: (symbol: string) => void;
   ready: boolean;
-}>({ watch: ['FPT', 'VCB', 'HPG', 'MBB'], toggle: () => {}, ready: false });
-export const useWatch = () => useContext(WatchContext);
+  accessToken: string | null;
+  userEmail: string | null;
+  signOut: () => void;
+};
+const WatchContext = createContext<AppData>({
+  stocks: [], indices: [], articles: [], loading: true, dataError: null,
+  watch: [], toggle: () => {}, ready: false, accessToken: null, userEmail: null, signOut: () => {},
+});
+export const useAppData = () => useContext(WatchContext);
+export const useWatch = () => useAppData();
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [watch, setWatch] = useState<string[]>(['FPT', 'VCB', 'HPG', 'MBB']);
+  const [watch, setWatch] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
+  const [stocksData, setStocksData] = useState<Stock[]>([]);
+  const [indicesData, setIndicesData] = useState<MarketIndex[]>([]);
+  const [articlesData, setArticlesData] = useState<APIArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   useEffect(() => {
+    let mounted = true;
+    Promise.allSettled([listAllStocks(), listIndices(), listNews({ limit: 100 })]).then((results) => {
+      if (!mounted) return;
+      const messages: string[] = [];
+      if (results[0].status === 'fulfilled') setStocksData(results[0].value);
+      else messages.push(results[0].reason instanceof Error ? results[0].reason.message : 'Không tải được cổ phiếu.');
+      if (results[1].status === 'fulfilled') setIndicesData(results[1].value);
+      else messages.push(results[1].reason instanceof Error ? results[1].reason.message : 'Không tải được chỉ số.');
+      if (results[2].status === 'fulfilled') setArticlesData(results[2].value.articles);
+      else messages.push(results[2].reason instanceof Error ? results[2].reason.message : 'Không tải được tin tức.');
+      setDataError(messages.length ? messages.join(' ') : null);
+      setLoading(false);
+      try {
+        const saved = JSON.parse(localStorage.getItem('nep-watchlist') || '[]');
+        if (Array.isArray(saved)) setWatch(saved.filter((value): value is string => typeof value === 'string' && results[0].status === 'fulfilled' && results[0].value.some((stock) => stock.symbol === value)));
+      } catch {}
+    });
     try {
-      const saved = JSON.parse(localStorage.getItem('nep-watchlist') || 'null');
-      if (Array.isArray(saved) && saved.every((v) => typeof v === 'string'))
-        setWatch(saved.filter((v) => stocks.some((s) => s.symbol === v)));
+      const token = sessionStorage.getItem(AUTH_STORAGE_KEY);
+      const email = sessionStorage.getItem('finsight-user-email');
+      if (token) { setAccessToken(token); setUserEmail(email); }
     } catch {}
     setReady(true);
+    const authChanged = () => {
+      let token: string | null = null;
+      let email: string | null = null;
+      try {
+        token = sessionStorage.getItem(AUTH_STORAGE_KEY);
+        email = sessionStorage.getItem('finsight-user-email');
+      } catch {}
+      setAccessToken(token);
+      setUserEmail(email);
+      if (token) getWatchlist(token).then((symbols) => setWatch(symbols)).catch(() => setDataError('Không thể đồng bộ danh sách theo dõi.'));
+      else {
+        try {
+          const saved = JSON.parse(localStorage.getItem('nep-watchlist') || '[]');
+          if (Array.isArray(saved)) setWatch(saved.filter((value): value is string => typeof value === 'string'));
+        } catch { setWatch([]); }
+      }
+    };
+    window.addEventListener('finsight-auth-change', authChanged);
+    if (sessionStorage.getItem(AUTH_STORAGE_KEY)) authChanged();
+    return () => { mounted = false; window.removeEventListener('finsight-auth-change', authChanged); };
   }, []);
   // Phần tử .reveal hiện dần khi cuộn tới; theo dõi cả phần tử được thêm sau khi đổi trang.
   useEffect(() => {
@@ -69,8 +127,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch {}
       return next;
     });
+    if (accessToken) {
+      const add = !watch.includes(symbol);
+      changeWatchlist(accessToken, symbol, add).then((symbols) => setWatch(symbols)).catch((error) => setDataError(error instanceof Error ? error.message : 'Không thể cập nhật danh sách theo dõi.'));
+    }
   }
-  return <WatchContext.Provider value={{ watch, toggle, ready }}>{children}</WatchContext.Provider>;
+  function signOut() {
+    try {
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      sessionStorage.removeItem('finsight-user-email');
+    } catch {}
+    setAccessToken(null);
+    setUserEmail(null);
+    window.dispatchEvent(new Event('finsight-auth-change'));
+  }
+  return <WatchContext.Provider value={{ watch, toggle, ready, stocks: stocksData, indices: indicesData, articles: articlesData, loading, dataError, accessToken, userEmail, signOut }}>{children}</WatchContext.Provider>;
 }
 // Logo Finsight: chữ F kem #EDE3D1 trên ô nền tối, nên nổi rõ ở cả giao diện sáng lẫn tối.
 export function LogoImg({ size = 30 }: { size?: number }) {
@@ -156,6 +227,7 @@ export function Header() {
     [query, setQuery] = useState('');
   const input = useRef<HTMLInputElement>(null);
   const nav = useRef<HTMLElement>(null);
+  const { stocks: liveStocks, userEmail, signOut } = useAppData();
   useEffect(() => {
     setSearch(false);
     setQuery('');
@@ -201,7 +273,7 @@ export function Header() {
   }, [search]);
   if (pathname.replace(/\/$/, '') === '/chatbot') return null;
   if (isLanding(pathname)) return <HomeHeader />;
-  const matches = stocks
+  const matches = liveStocks
     .filter((s) =>
       `${s.symbol} ${s.name}`.toLocaleLowerCase('vi').includes(query.toLocaleLowerCase('vi')),
     )
@@ -226,6 +298,7 @@ export function Header() {
               [
                 ['/', 'Thị trường'],
                 ['/tin-tuc/', 'Tin tức'],
+                ['/bao-cao-tai-chinh/', 'Báo cáo'],
                 ['/theo-doi/', 'Theo dõi'],
               ] as const
             ).map(([href, label]) => (
@@ -251,10 +324,11 @@ export function Header() {
             <span className="nav-brush" aria-hidden="true" />
           </nav>
           <div className="header-actions">
-            <span className="demo-badge">
+            <Link className="demo-badge" href={userEmail ? '/bao-cao-tai-chinh/' : '/dang-nhap/'} aria-label={userEmail ? `Đã đăng nhập ${userEmail}` : 'Đăng nhập bằng Google'}>
               <span />
-              Bản demo
-            </span>
+              {userEmail ? userEmail : 'Đăng nhập'}
+            </Link>
+            {userEmail && <button type="button" className="text-[10px] text-foreground/60 hover:text-foreground" onClick={signOut}>Thoát</button>}
             <button
               type="button"
               className={`header-search${search ? ' is-selected' : ''}`}
@@ -267,7 +341,7 @@ export function Header() {
               <kbd>Ctrl K</kbd>
             </button>
             <span className="avatar" aria-hidden="true">
-              K
+              {userEmail?.slice(0, 1).toLocaleUpperCase('vi') || 'F'}
             </span>
           </div>
         </div>
@@ -311,7 +385,7 @@ export function Header() {
                   </Link>
                 ))
               ) : (
-                <p className="search-empty">Không tìm thấy cổ phiếu. Thử mã FPT, VCB hoặc HPG.</p>
+                <p className="search-empty">{liveStocks.length ? 'Không tìm thấy cổ phiếu phù hợp.' : 'Đang tải dữ liệu cổ phiếu…'}</p>
               )}
             </div>
           </div>
@@ -321,7 +395,7 @@ export function Header() {
   );
 }
 export function CompanyMark({ symbol }: { symbol: string }) {
-  const stock = stocks.find((s) => s.symbol === symbol);
+  const stock = useAppData().stocks.find((s) => s.symbol === symbol);
   return (
     <span
       className={`company-mark mark-${symbol.toLowerCase()}`}
@@ -357,14 +431,14 @@ export function Footer() {
           <Link href="/" aria-label="Turtock">
             <Brand />
           </Link>
-          <p>Tin được chọn lọc, không chạy theo từng giây.</p>
+          <p>Dữ liệu có nguồn, thời điểm và doanh nghiệp liên quan.</p>
           <Link href="/tin-tuc/">
             Đọc tin doanh nghiệp <ArrowUpRight size={16} />
           </Link>
         </div>
         <div className="footer-bottom">
           <span>© 2026 Turtock</span>
-          <span>Dữ liệu giá và nội dung bài viết là minh họa, không cập nhật trực tiếp.</span>
+          <span>Dữ liệu được thu thập từ các nguồn được ghi rõ trong từng trang.</span>
           <span className="footer-made">
             Được làm để bạn hiểu hơn <ArrowRight size={13} />
           </span>

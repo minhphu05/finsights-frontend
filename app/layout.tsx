@@ -9,9 +9,9 @@ import { AppProvider, Header, Footer } from '@/components/shell';
 
 export const metadata: Metadata = {
   icons: { icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }, { url: '/favicon.png', type: 'image/png' }] },
-  title: { default: 'Turtock — Mai rùa thị trường', template: '%s · Turtock' },
+  title: { default: 'Finsight — Dữ liệu và góc nhìn tài chính', template: '%s · Finsight' },
   description:
-    'Xem cổ phiếu Việt Nam qua mai rùa VN30 và đọc tin doanh nghiệp được chọn lọc. Bản thiết kế tương tác với dữ liệu minh họa.',
+    'Theo dõi dữ liệu thị trường Việt Nam, tin doanh nghiệp và báo cáo tài chính có nguồn dẫn.',
 };
 export const viewport: Viewport = { themeColor: '#0e1e1d', colorScheme: 'dark' };
 

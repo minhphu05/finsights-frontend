@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { indices, stocks, number, signed } from '@/lib/data';
-import { useWatch } from './shell';
+import { number, signed } from '@/lib/data';
+import { useAppData } from './shell';
 import PriceChart from './price-chart';
 import { LineIcon } from './home';
 import MarketIndices from './market-indices';
@@ -19,7 +19,7 @@ const rangeLabels = ['1 ngày', '1 tuần', '1 tháng', '3 tháng', '1 năm', 'T
 
 export default function HomeMarket() {
   const params = useSearchParams();
-  const { watch, toggle } = useWatch();
+  const { watch, toggle, stocks, indices, loading, dataError } = useAppData();
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string>();
   const [range, setRange] = useState(0);
@@ -37,7 +37,8 @@ export default function HomeMarket() {
   useEffect(() => { root.current?.setAttribute('data-market', ''); }, []);
   useEffect(() => { setSelected(params.get('ma') || undefined); }, [params]);
   const selectedStock = stocks.find(stock => stock.symbol === selected);
-  const current = indices[index];
+  const current = indices[index] || null;
+  const chartStock = selectedStock || (!current && !loading ? stocks[0] : undefined);
   const filtered = stocks.filter(stock =>
     `${stock.symbol} ${stock.name}`.toLocaleLowerCase('vi').includes(query.toLocaleLowerCase('vi')) &&
     (filter === 'all' || (filter === 'up' && stock.change > 0) || (filter === 'down' && stock.change < 0) || (filter === 'saved' && watch.includes(stock.symbol))) &&
@@ -55,6 +56,8 @@ export default function HomeMarket() {
     if (target) scrollToSection(target, 'center');
   };
 
+  if (loading && !stocks.length) return <div className="py-16 text-sm text-foreground/65">Đang tải dữ liệu thị trường…</div>;
+
   return (
     <div ref={root} className="text-foreground [--chart-grid:color-mix(in_srgb,var(--color-foreground)_15%,transparent)] [--surface:var(--color-background)]">
       <MarketIndices index={index} active={!selectedStock} onSelect={position => { setIndex(position); setSelected(undefined); }} />
@@ -63,19 +66,19 @@ export default function HomeMarket() {
         <section id="home-chart" className="min-w-0" aria-labelledby="chart-title">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <h3 id="chart-title" className="font-editorial text-[28px] font-normal">Diễn biến thị trường</h3>
-            <span className="text-[10px] tracking-wider text-foreground/60 uppercase">Phiên minh họa · 14:45</span>
+            <span className="text-[10px] tracking-wider text-foreground/60 uppercase">{chartStock?.quoteAt ? new Date(chartStock.quoteAt).toLocaleString('vi-VN') : current?.quoteAt ? new Date(current.quoteAt).toLocaleString('vi-VN') : 'Chưa có thời điểm cập nhật'}</span>
           </div>
           <div className="mt-7 flex flex-wrap items-end justify-between gap-5">
             <div>
-              <div className="flex items-center gap-3 text-xs"><span>{selectedStock?.symbol || current.name}</span><span className="text-foreground/60">{selectedStock?.short || current.exchange}</span>{selectedStock && <button className="p-1" aria-label="Trở về biểu đồ chỉ số" onClick={() => setSelected(undefined)}><LineIcon kind="close" /></button>}</div>
-              <p className="mt-2 flex flex-wrap items-baseline gap-3 font-editorial text-4xl tabular-nums">{number(selectedStock?.price || current.value, selectedStock ? 0 : 2)}<span className="font-sans text-[11px] text-foreground/60">{selectedStock ? 'VND' : 'điểm'}</span><span className={`font-sans text-xs ${positive(selectedStock?.change ?? current.percent)}`}>{signed(selectedStock?.change ?? current.percent)}%</span></p>
+            <div className="flex items-center gap-3 text-xs"><span>{chartStock?.symbol || current?.name || 'Chưa có dữ liệu'}</span><span className="text-foreground/60">{chartStock?.short || current?.exchange || ''}</span>{selectedStock && <button className="p-1" aria-label="Trở về biểu đồ chỉ số" onClick={() => setSelected(undefined)}><LineIcon kind="close" /></button>}</div>
+              <p className="mt-2 flex flex-wrap items-baseline gap-3 font-editorial text-4xl tabular-nums">{chartStock ? number(chartStock.price) : current ? number(current.value, 2) : '—'}<span className="font-sans text-[11px] text-foreground/60">{chartStock ? 'VND' : current ? 'điểm' : ''}</span>{(chartStock || current) && <span className={`font-sans text-xs ${positive(chartStock?.change ?? current?.percent ?? 0)}`}>{signed(chartStock?.change ?? current?.percent ?? 0)}%</span>}</p>
             </div>
             <div className="flex flex-wrap gap-1" aria-label="Khoảng thời gian">
               {ranges.map((label, position) => <button key={label} className={`${range === position ? activeControl : control} !px-3 !py-2`} aria-label={rangeLabels[position]} aria-pressed={range === position} onClick={() => setRange(position)}>{label}</button>)}
             </div>
           </div>
-          <div className="mt-7"><PriceChart index={index} stock={selectedStock} range={range} editorial /></div>
-          <div className="mt-5 flex flex-wrap justify-between gap-3 border-t border-solid border-foreground/15 pt-4 text-[11px] text-foreground/65"><span>Khối lượng <strong className="ml-2 font-medium text-foreground">{selectedStock?.volume || current.volume}</strong></span><span>Dữ liệu giả lập, không cập nhật trực tiếp</span></div>
+          <div className="mt-7"><PriceChart index={index} stock={chartStock} range={range} editorial /></div>
+          <div className="mt-5 flex flex-wrap justify-between gap-3 border-t border-solid border-foreground/15 pt-4 text-[11px] text-foreground/65"><span>Khối lượng <strong className="ml-2 font-medium text-foreground">{chartStock?.volume || current?.volume || '—'}</strong></span><span>{dataError || 'Dữ liệu từ Finsight Market API'}</span></div>
         </section>
         <aside className="min-w-0 lg:border-l lg:border-solid lg:border-foreground/20 lg:pl-10" aria-labelledby="home-watch-title">
           <div className="flex items-center justify-between gap-3"><h3 id="home-watch-title" className="font-editorial text-[28px] font-normal">Đang theo dõi <span className="align-top font-sans text-xs">{watch.length}</span></h3><button className="p-2" aria-label={adding ? 'Đóng thêm cổ phiếu' : 'Thêm cổ phiếu theo dõi'} aria-expanded={adding} onClick={() => setAdding(!adding)}><LineIcon kind={adding ? 'close' : 'search'} /></button></div>
@@ -113,7 +116,7 @@ export default function HomeMarket() {
           </StockTableHighlight>
         </div>
         {!visible.length && <div className="py-12 text-center"><h4 className="font-editorial text-2xl font-normal">Chưa tìm thấy cổ phiếu phù hợp</h4><p className="mt-3 text-sm text-foreground/65">Thử mã khác hoặc mở rộng bộ lọc.</p><button className={`${control} mt-5`} onClick={reset}>Xóa bộ lọc</button></div>}
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-[11px] text-foreground/65"><span>{filtered.length ? `${(safePage - 1) * 6 + 1}–${Math.min(safePage * 6, filtered.length)} trên ${filtered.length} cổ phiếu` : '0 cổ phiếu'} · Dữ liệu minh họa</span><div className="flex flex-wrap gap-2"><button className={control} disabled={safePage === 1} onClick={() => setPage(safePage - 1)} aria-label="Trang trước">Trước</button>{Array.from({ length: pages }, (_, position) => <button key={position} className={safePage === position + 1 ? activeControl : control} aria-current={safePage === position + 1 ? 'page' : undefined} onClick={() => setPage(position + 1)}>{position + 1}</button>)}<button className={control} disabled={safePage === pages} onClick={() => setPage(safePage + 1)} aria-label="Trang sau">Sau</button></div></div>
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-[11px] text-foreground/65"><span>{filtered.length ? `${(safePage - 1) * 6 + 1}–${Math.min(safePage * 6, filtered.length)} trên ${filtered.length} cổ phiếu` : '0 cổ phiếu'} · Dữ liệu thị trường đã thu thập</span><div className="flex flex-wrap gap-2"><button className={control} disabled={safePage === 1} onClick={() => setPage(safePage - 1)} aria-label="Trang trước">Trước</button>{Array.from({ length: pages }, (_, position) => <button key={position} className={safePage === position + 1 ? activeControl : control} aria-current={safePage === position + 1 ? 'page' : undefined} onClick={() => setPage(position + 1)}>{position + 1}</button>)}<button className={control} disabled={safePage === pages} onClick={() => setPage(safePage + 1)} aria-label="Trang sau">Sau</button></div></div>
       </section>
     </div>
   );

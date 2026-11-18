@@ -1,13 +1,15 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
-import { indices, number, signed } from '@/lib/data';
+import { number, signed } from '@/lib/data';
+import { useAppData } from './shell';
 
 export default function MarketIndices({ index, active, onSelect }: {
   index: number;
   active: boolean;
   onSelect: (index: number) => void;
 }) {
+  const { indices, loading, dataError } = useAppData();
   const container = useRef<HTMLDivElement>(null);
   const indicator = useRef<HTMLSpanElement>(null);
   const animation = useRef<Animation | null>(null);
@@ -68,6 +70,7 @@ export default function MarketIndices({ index, active, onSelect }: {
           </button>
         );
       })}
+      {!indices.length && <p className="col-span-full px-5 py-6 text-sm text-foreground/65">{loading ? 'Đang tải chỉ số thị trường…' : dataError || 'Chưa có dữ liệu chỉ số.'}</p>}
     </div>
   );
 }

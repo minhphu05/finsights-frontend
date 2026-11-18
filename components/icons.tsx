@@ -27,6 +27,7 @@ export {
   Newspaper,
   Clock3,
   CircleHelp,
+  ShieldCheck,
   SlidersHorizontal,
   PanelLeftClose,
   PanelLeftOpen,

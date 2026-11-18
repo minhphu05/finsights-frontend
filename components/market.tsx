@@ -21,18 +21,14 @@ import {
   Clock3,
 } from '@/components/icons';
 import {
-  stocks,
-  indices,
   number,
   signed,
-  articles,
   priceTone,
   type Stock,
   type Tone,
 } from '@/lib/data';
-import { useWatch, CompanyMark, WatchButton } from './shell';
+import { useAppData, CompanyMark, WatchButton } from './shell';
 import PriceChart from './price-chart';
-import TurtleShell from './turtle-shell';
 
 const ranges = ['1N', '1T', '1Th', '3Th', '1 năm', 'Tất cả'];
 const rangeLabels = ['1 ngày', '1 tuần', '1 tháng', '3 tháng', '1 năm', 'Tất cả thời gian'];
@@ -64,12 +60,13 @@ function MiniChart({ stock }: { stock: Stock }) {
   const data = stock.history,
     min = Math.min(...data),
     max = Math.max(...data);
+  if (data.length < 2) return <span className="text-foreground/40" aria-label={`Chưa có dữ liệu biểu đồ nhỏ cho ${stock.symbol}`}>—</span>;
   return (
     <svg
       className={`mini-chart ${stock.change < 0 ? 'negative' : stock.change === 0 ? 'neutral' : 'positive'}`}
       viewBox="0 0 100 32"
       role="img"
-      aria-label={`Diễn biến minh họa ${stock.symbol}: ${stock.change > 0 ? 'tăng' : stock.change < 0 ? 'giảm' : 'không đổi'}`}
+      aria-label={`Diễn biến ${stock.symbol}: ${stock.change > 0 ? 'tăng' : stock.change < 0 ? 'giảm' : 'không đổi'}`}
     >
       <polyline
         points={data
@@ -89,7 +86,7 @@ function MiniChart({ stock }: { stock: Stock }) {
 
 export default function Market({ watchOnly = false, embedded = false }: { watchOnly?: boolean; embedded?: boolean }) {
   const Root = embedded ? 'div' : 'main';
-  const { watch, toggle, ready } = useWatch();
+  const { watch, toggle, ready, stocks, indices, articles, loading, dataError } = useAppData();
   const params = useSearchParams();
   const [index, setIndex] = useState(0),
     [range, setRange] = useState(0),
@@ -109,7 +106,7 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
   }, [params]);
 
   const selectedStock = stocks.find((s) => s.symbol === selected);
-  const current = indices[index];
+  const current = indices[index] || null;
   const [periodMenu, setPeriodMenu] = useState(false);
 
   useEffect(() => {
@@ -153,7 +150,6 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
 
   return (
     <Root className="container market-page">
-      {!watchOnly && <TurtleShell />}
       <div className={`page-heading ${watchOnly ? '' : 'section-intro reveal'}`}>
         <div>
           {watchOnly ? <h1>Doanh nghiệp bạn quan tâm.</h1> : <h2>Soi kỹ từng nhịp.</h2>}
@@ -166,7 +162,7 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
         <div className="market-meta">
           <span className="session-label">
             <span className="status-dot" />
-            Phiên minh họa · 14:45
+            {current?.quoteAt ? `Cập nhật ${new Date(current.quoteAt).toLocaleString('vi-VN')}` : loading ? 'Đang tải thị trường…' : 'Chưa có thời điểm cập nhật'}
           </span>
           <div className="market-select-wrap">
             <button
@@ -182,7 +178,7 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
               <div className="market-select-menu">
                 <Check size={16} />
                 <span>
-                  Việt Nam · HOSE / HNX / UPCOM<small>Bản demo hỗ trợ thị trường Việt Nam</small>
+                  Việt Nam · HOSE / HNX / UPCOM<small>Dữ liệu từ Finsight Market API</small>
                 </span>
               </div>
             )}
@@ -217,6 +213,7 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
               </div>
             </button>
           ))}
+          {!indices.length && <p className="px-4 py-6 text-sm text-foreground/60">{loading ? 'Đang tải chỉ số…' : dataError || 'Chưa có dữ liệu chỉ số.'}</p>}
         </div>
       )}
       {!watchOnly && (
@@ -226,7 +223,7 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
               <h2 id="chart-title">Diễn biến thị trường</h2>
               <span className="data-label">
                 <span />
-                Dữ liệu mẫu
+                Dữ liệu thị trường đã thu thập
               </span>
             </div>
             <div className="chart-summary">
@@ -253,16 +250,16 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
                         <ArrowUpRight size={19} />
                       </span>
                       <span>
-                        {current.name}
-                        <small>{current.exchange} · Chỉ số thị trường</small>
+                        {current?.name || 'Chỉ số thị trường'}
+                        <small>{current?.exchange || 'Chưa có dữ liệu'}</small>
                       </span>
                     </>
                   )}
                 </div>
                 <div className="chart-number">
-                  {number(selectedStock?.price || current.value, selectedStock ? 0 : 2)}
+                  {selectedStock ? number(selectedStock.price) : current ? number(current.value, 2) : '—'}
                   <small>{selectedStock ? 'VND' : 'điểm'}</small>
-                  <Trend value={selectedStock ? selectedStock.change : current.percent} />
+                  {current || selectedStock ? <Trend value={selectedStock ? selectedStock.change : current?.percent || 0} /> : null}
                 </div>
               </div>
               <div className="chart-range" aria-label="Khoảng thời gian">
@@ -282,21 +279,21 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
             <PriceChart index={index} stock={selectedStock} range={range} />
             <div className="chart-bottom">
               <span>
-                Khối lượng <strong>{selectedStock?.volume || current.volume}</strong>
+                Khối lượng <strong>{selectedStock?.volume || current?.volume || '—'}</strong>
               </span>
               <span>
-                Giá trị <strong>{selectedStock ? '415,8' : '12.846,5'} tỷ VND</strong>
+                Giá trị <strong>Chưa có dữ liệu</strong>
               </span>
               <span className="chart-source">
-                Phiên giả lập
+                {selectedStock?.quoteAt ? new Date(selectedStock.quoteAt).toLocaleDateString('vi-VN') : current?.quoteAt ? new Date(current.quoteAt).toLocaleDateString('vi-VN') : 'Nguồn dữ liệu'}
                 <CircleHelp size={13} />
               </span>
             </div>
           </section>
           <aside className="watch-panel panel">
             <div className="panel-heading">
-              <h2>
-                Đang theo dõi <span className="count-badge">{ready ? watch.length : 4}</span>
+                <h2>
+                Đang theo dõi <span className="count-badge">{ready ? watch.length : 0}</span>
               </h2>
               <button
                 className={`icon-button add-watch-button ${adding ? 'active' : ''}`}
@@ -477,7 +474,7 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
         )}
         <div className="stock-table-wrap">
           <table className="stock-table">
-            <caption className="sr-only">Bảng giá cổ phiếu minh họa thị trường Việt Nam</caption>
+            <caption className="sr-only">Bảng giá cổ phiếu thị trường Việt Nam</caption>
             <thead>
               <tr>
                 <th className="save-column">
@@ -612,7 +609,7 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
             {filtered.length
               ? `${(safePage - 1) * 6 + 1}–${Math.min(safePage * 6, filtered.length)} trên ${filtered.length} cổ phiếu`
               : '0 cổ phiếu'}
-            <span className="demo-caption"> · Dữ liệu minh họa</span>
+            <span className="demo-caption"> · Dữ liệu Finsight Market API</span>
           </span>
           <div>
             <button
@@ -669,7 +666,7 @@ export default function Market({ watchOnly = false, embedded = false }: { watchO
               <div className="article-meta">
                 <span>
                   <Clock3 size={15} />
-                  {a.read}
+                  {a.sourceName}
                 </span>
               </div>
               <span className="article-inline-link">
