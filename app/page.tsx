@@ -134,7 +134,6 @@ export default function Home() {
         <span>© 2026 Finsight</span>
         <p className="max-[850px]:w-full">Dữ liệu thị trường và tin tức được cập nhật từ các nguồn đã thu thập.</p>
       </footer>
-      <AssistantButton floating />
     </div>
   );
 }

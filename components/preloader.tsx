@@ -87,14 +87,20 @@ export default function Preloader() {
         <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 5, background: '#eadfce' }} />
       </div>
       <div ref={content} style={{ position: 'absolute', inset: 0, color: '#eadfce' }}>
-        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', alignContent: 'center', gap: 30 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img ref={mark} src="/finsight-lockup-cream.svg" alt="" style={{ height: 90, width: 'auto', opacity: 0 }} />
-          <svg width="220" height="132" viewBox="0 0 180 120" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 108H170" strokeWidth="1" opacity="0.2" />
-            <path ref={line} pathLength={1} d="M10 100 L45 80 L70 90 L105 55 L130 65 L158.8 32.5" style={{ strokeDasharray: 1, strokeDashoffset: 1 }} />
-            <polygon ref={head} points="168,22 164.1,37.1 153.5,27.9" fill="currentColor" strokeWidth="1" style={{ opacity: 0, transition: 'opacity 0.3s ease' }} />
-          </svg>
+        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
+          {/* Chart line runs under the lockup and climbs its right side, so the arrow wraps the logo. */}
+          <div style={{ position: 'relative', width: 240, height: 190 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img ref={mark} src="/finsight-lockup-cream.svg" alt="" style={{ position: 'absolute', left: 60, top: 40, height: 90, width: 'auto', opacity: 0 }} />
+            <svg width="240" height="190" viewBox="0 0 240 190" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', inset: 0 }}>
+              {/* Tapered swoosh body is revealed by a stroke that draws along its centre line. */}
+              <mask id="preloader-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="240" height="190">
+                <path ref={line} pathLength={1} d="M30 140 C118 152 206 146 214 58 L214.7 50" stroke="#fff" strokeWidth="20" strokeLinecap="butt" style={{ strokeDasharray: '1 2', strokeDashoffset: 1 }} />
+              </mask>
+              <path d="M30 140 C119 157 212 150 220.5 58.6 L221.2 50.6 L208.2 49.4 L207.5 57.4 C200 142 118 148 30 140 Z" fill="currentColor" stroke="none" mask="url(#preloader-reveal)" />
+              <polygon ref={head} points="216.7,28.1 229.1,57.4 199.3,54.6" fill="currentColor" strokeWidth="1" style={{ opacity: 0, transition: 'opacity 0.3s ease' }} />
+            </svg>
+          </div>
         </div>
         <p style={{ position: 'absolute', left: 0, right: 0, bottom: 44, textAlign: 'center', fontSize: 10, letterSpacing: '0.3em', opacity: 0.7 }}>FINANCE × INSIGHT × INTELLIGENCE</p>
       </div>
