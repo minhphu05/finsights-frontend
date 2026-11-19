@@ -135,7 +135,6 @@ export default function Home() {
         <span>© 2026 Finsight</span>
         <p className="max-[850px]:w-full">Dữ liệu và bài viết minh họa. Trợ lý AI đang phát triển.</p>
       </footer>
-      <AssistantButton floating />
     </div>
   );
 }
