@@ -1,6 +1,6 @@
 import type { Article, Stock } from './data';
 
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.finsights.biz').replace(/\/$/, '');
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://finsights-prod-node-01.tail73ddb8.ts.net:10000').replace(/\/$/, '');
 export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1023695913206-ls0utf87gs2a0n4cenc157ia4uho4fep.apps.googleusercontent.com';
 export const AUTH_STORAGE_KEY = 'finsight-access-token';
 
