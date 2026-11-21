@@ -33,6 +33,10 @@ export default function ArticlePage() {
   if (status === 'loading') return <main className="container py-32 text-sm text-foreground/65">Đang tải bài viết…</main>;
   if (status !== 'ready' || !article) return <main className="container py-32"><h1 className="font-editorial text-4xl">{status === 'missing' ? 'Không tìm thấy bài viết.' : 'Không tải được bài viết.'}</h1><p className="mt-4 text-sm text-foreground/65">{status === 'missing' ? 'Bài viết có thể đã được gỡ khỏi nguồn.' : 'Hãy thử lại sau.'}</p><Link className="mt-7 inline-flex items-center gap-3 text-sm" href="/tin-tuc/"><ArrowLeft size={17} /> Trở lại tin tức</Link></main>;
   const relatedStocks = stocks.filter((stock) => article.tickers.includes(stock.symbol));
+  const articleParagraphs = article.bodyMarkdown
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
   return (
     <main className="container article-page">
       <Link href="/tin-tuc/" className="back-link"><ArrowLeft size={17} />Trở lại tin tức</Link>
@@ -44,10 +48,12 @@ export default function ArticlePage() {
           <div className="article-byline"><span className="editor-avatar"><LogoImg size={26} /></span><span><strong>{article.sourceName}</strong><small>{article.publisherCode || 'Nguồn tin'} · {article.time}</small></span></div>
           {article.image && <figure><img src={article.image} alt="" /><figcaption>Ảnh do nguồn tin cung cấp. Vui lòng xem bài gốc để biết đầy đủ bối cảnh.</figcaption></figure>}
           <div className="prose">
-            <p>{article.description || 'Finsight lưu trữ thông tin xuất bản, chủ đề và doanh nghiệp liên quan của bài viết này.'}</p>
-            <h2>Nguồn và quyền nội dung</h2>
-            <p>Finsight hiển thị tiêu đề, tóm tắt và thông tin phân loại đã thu thập. Nội dung chi tiết thuộc quyền của đơn vị xuất bản; xem bài gốc để đọc toàn văn.</p>
-            {article.sourceURL && <p><a href={article.sourceURL} target="_blank" rel="noreferrer">Mở bài viết trên {article.sourceName} <ArrowUpRight className="inline" size={15} /></a></p>}
+            <h2>Nội dung bài viết</h2>
+            {articleParagraphs.length > 0
+              ? articleParagraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 32)}`} className="whitespace-pre-wrap">{paragraph}</p>)
+              : <p className="article-demo-note">Nội dung toàn văn chưa có trong dữ liệu của bài viết này.</p>}
+            <h2>Nguồn bài viết</h2>
+            <p>{article.sourceName}{article.sourceURL && <> · <a href={article.sourceURL} target="_blank" rel="noreferrer">Mở bài gốc <ArrowUpRight className="inline" size={15} /></a></>}</p>
           </div>
           <div className="article-end"><Brand /><span>Hiểu bối cảnh. Thấy rõ chuyển động.</span></div>
         </article>

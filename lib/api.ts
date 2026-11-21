@@ -30,7 +30,7 @@ export type FinancialDocument = {
   document_asset_uid: string; rights_status: string;
 };
 export type APIArticle = Article & {
-  sourceName: string; sourceURL: string; publisherCode: string; publishedAt: number;
+  sourceName: string; sourceURL: string; publisherCode: string; publishedAt: number; bodyMarkdown: string;
 };
 
 export class APIError extends Error {
@@ -101,6 +101,7 @@ export function mapArticle(value: Record<string, unknown>): APIArticle {
     read: String(value.source_name || 'Nguồn tin'), body: [],
     sourceName: String(value.source_name || 'Nguồn tin'), sourceURL: String(value.source_url || ''),
     publisherCode: String(value.publisher_code || ''), publishedAt,
+    bodyMarkdown: String(value.body_markdown || ''),
   };
 }
 
