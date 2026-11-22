@@ -2448,7 +2448,32 @@ input::placeholder {
 
 /* Trang bài viết */
 .article-page {
-  padding-top: 28px;
+  padding-top: 112px;
+}
+body:has([data-article-page]) {
+  --bg: var(--color-background);
+  --surface: color-mix(in srgb, var(--color-foreground) 4%, var(--color-background));
+  --surface-2: color-mix(in srgb, var(--color-foreground) 7%, var(--color-background));
+  --surface-3: color-mix(in srgb, var(--color-foreground) 11%, var(--color-background));
+  --stage: color-mix(in srgb, var(--color-foreground) 3%, var(--color-background));
+  --line: color-mix(in srgb, var(--color-foreground) 17%, var(--color-background));
+  --line-strong: color-mix(in srgb, var(--color-foreground) 30%, var(--color-background));
+  --text: var(--color-foreground);
+  --muted: color-mix(in srgb, var(--color-foreground) 68%, var(--color-background));
+  --faint: color-mix(in srgb, var(--color-foreground) 52%, var(--color-background));
+  --prose: color-mix(in srgb, var(--color-foreground) 92%, var(--color-background));
+  --brand: var(--color-market-accent);
+  --brand-deep: var(--color-market-accent);
+  --brand-ink: var(--color-market-accent);
+  --cream: var(--color-primary);
+  --on-data: var(--color-background);
+  --chart-grid: var(--line);
+  color-scheme: light;
+  background: var(--bg);
+  color: var(--text);
+}
+html[data-theme='dark'] body:has([data-article-page]) {
+  color-scheme: dark;
 }
 .back-link {
   display: inline-flex;
@@ -2544,6 +2569,19 @@ input::placeholder {
   font-size: 13px;
   line-height: 1.7;
   color: var(--muted);
+}
+.prose .article-source-link {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--brand-ink);
+  text-underline-offset: 4px;
+}
+.prose .article-source-link:hover {
+  color: var(--brand-ink);
 }
 .article-end {
   display: flex;
@@ -4132,5 +4170,15 @@ h1,h2,h3,.brand-name{font-family:var(--font-display)}
   :is(button, select, input, [role='button'], a)[aria-disabled='true'],
   label:has(input:disabled) {
     @apply cursor-default;
+  }
+}
+
+@layer utilities {
+  body:has([data-article-page]) [data-home-header] {
+    background-color: var(--color-ink);
+    color: var(--color-primary);
+  }
+  @media (max-width: 640px) {
+    .article-page { padding-top: 100px; }
   }
 }

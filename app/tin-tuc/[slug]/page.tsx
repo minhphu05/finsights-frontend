@@ -8,6 +8,17 @@ import { getNews, listNews, type APIArticle } from '@/lib/api';
 import { number, signed } from '@/lib/data';
 import { Brand, LogoImg, WatchButton, useAppData } from '@/components/shell';
 
+function repairArticleSpacing(text: string) {
+  return text
+    .replace(/([\p{Ll}])([\p{Lu}])/gu, '$1 $2')
+    .replace(/(VFF|FIFA)(?=[\p{Ll}]|[\p{Lu}][\p{Ll}])/gu, '$1 ')
+    .replace(/(Bỉ|Mỹ|Nga|Anh|Úc|Ý)(?=[\p{Ll}])/gu, '$1 ')
+    .replace(/(Nam)(?=vẫn|cũng|đã|đang|sẽ|không|có|là|với|trong|sau|trước|tại|này|vừa|tiếp|được)/u, '$1 ')
+    .replace(/(U\d{1,3})(?=[\p{Lu}])/gu, '$1 ')
+    .replace(/([,;:])(?=\S)/g, '$1 ')
+    .replace(/[ \t]{2,}/g, ' ');
+}
+
 export default function ArticlePage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
@@ -30,15 +41,15 @@ export default function ArticlePage() {
     return () => { active = false; };
   }, [slug]);
 
-  if (status === 'loading') return <main className="container py-32 text-sm text-foreground/65">Đang tải bài viết…</main>;
-  if (status !== 'ready' || !article) return <main className="container py-32"><h1 className="font-editorial text-4xl">{status === 'missing' ? 'Không tìm thấy bài viết.' : 'Không tải được bài viết.'}</h1><p className="mt-4 text-sm text-foreground/65">{status === 'missing' ? 'Bài viết có thể đã được gỡ khỏi nguồn.' : 'Hãy thử lại sau.'}</p><Link className="mt-7 inline-flex items-center gap-3 text-sm" href="/tin-tuc/"><ArrowLeft size={17} /> Trở lại tin tức</Link></main>;
+  if (status === 'loading') return <main data-article-page className="container py-32 text-sm text-foreground/65">Đang tải bài viết…</main>;
+  if (status !== 'ready' || !article) return <main data-article-page className="container py-32"><h1 className="font-editorial text-4xl">{status === 'missing' ? 'Không tìm thấy bài viết.' : 'Không tải được bài viết.'}</h1><p className="mt-4 text-sm text-foreground/65">{status === 'missing' ? 'Bài viết có thể đã được gỡ khỏi nguồn.' : 'Hãy thử lại sau.'}</p><Link className="mt-7 inline-flex items-center gap-3 text-sm" href="/tin-tuc/"><ArrowLeft size={17} /> Trở lại tin tức</Link></main>;
   const relatedStocks = stocks.filter((stock) => article.tickers.includes(stock.symbol));
   const articleParagraphs = article.bodyMarkdown
     .split(/\n{2,}/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
   return (
-    <main className="container article-page">
+    <main data-article-page className="container article-page">
       <Link href="/tin-tuc/" className="back-link"><ArrowLeft size={17} />Trở lại tin tức</Link>
       <div className="article-layout">
         <article className="article-body">
@@ -50,10 +61,12 @@ export default function ArticlePage() {
           <div className="prose">
             <h2>Nội dung bài viết</h2>
             {articleParagraphs.length > 0
-              ? articleParagraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 32)}`} className="whitespace-pre-wrap">{paragraph}</p>)
+              ? articleParagraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 32)}`} className="whitespace-pre-wrap">{repairArticleSpacing(paragraph)}</p>)
               : <p className="article-demo-note">Nội dung toàn văn chưa có trong dữ liệu của bài viết này.</p>}
             <h2>Nguồn bài viết</h2>
-            <p>{article.sourceName}{article.sourceURL && <> · <a href={article.sourceURL} target="_blank" rel="noreferrer">Mở bài gốc <ArrowUpRight className="inline" size={15} /></a></>}</p>
+            <p>{article.sourceURL
+              ? <a className="article-source-link" href={article.sourceURL} target="_blank" rel="noreferrer" aria-label={`Mở bài gốc trên ${article.sourceName}`}><span>{article.sourceName}</span><span aria-hidden="true">·</span><span>Mở bài gốc</span><ArrowUpRight size={15} /></a>
+              : article.sourceName}</p>
           </div>
           <div className="article-end"><Brand /><span>Hiểu bối cảnh. Thấy rõ chuyển động.</span></div>
         </article>
