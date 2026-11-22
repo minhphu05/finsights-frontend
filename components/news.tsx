@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, Search, X } from '@/components/icons';
 import { number, signed } from '@/lib/data';
-import { listNews, type APIArticle } from '@/lib/api';
+import { API_UNAVAILABLE_MESSAGE, listNews, type APIArticle } from '@/lib/api';
 import { homeStyles as ui } from './home-styles';
 import { LineIcon } from './home';
 import { useAppData } from './shell';
@@ -39,9 +39,10 @@ export default function News() {
     let active = true;
     const timer = setTimeout(() => {
       setBusy(true);
+      setError('');
       listNews({ limit: 24, symbol: ticker, category: category && category !== 'Tất cả' ? category : '', query })
         .then((result) => { if (active) { setArticles(result.articles); setTotal(result.total); setError(''); } })
-        .catch((reason) => { if (active) { setError(reason instanceof Error ? reason.message : 'Không tải được tin tức.'); setArticles([]); setTotal(0); } })
+        .catch((reason) => { if (active) { setError(reason instanceof Error ? reason.message : API_UNAVAILABLE_MESSAGE); setArticles([]); setTotal(0); } })
         .finally(() => { if (active) setBusy(false); });
     }, 220);
     return () => { active = false; clearTimeout(timer); };
@@ -53,7 +54,7 @@ export default function News() {
     setBusy(true);
     listNews({ limit: 24, offset: articles.length, symbol: ticker, category: category && category !== 'Tất cả' ? category : '', query })
       .then((result) => { setArticles((current) => [...current, ...result.articles]); setTotal(result.total); setError(''); })
-      .catch((reason) => setError(reason instanceof Error ? reason.message : 'Không tải được tin tiếp theo.'))
+      .catch((reason) => setError(reason instanceof Error ? reason.message : API_UNAVAILABLE_MESSAGE))
       .finally(() => setBusy(false));
   };
   return (
@@ -95,7 +96,7 @@ export default function News() {
               </aside>
             </div>
           </section>
-        </> : <section className="bg-background text-foreground"><div className={`${ui.wrap} flex flex-col items-start gap-5 py-16 md:py-24`}><Search size={34} strokeWidth={1.2} /><h2 className={ui.sectionTitle}>Chưa có tin phù hợp.</h2><p className="text-[13px] text-foreground/65">{error || (appLoading || busy ? 'Đang tải tin tức từ API…' : dataError || 'Thử mã khác hoặc xem lại bộ lọc.')}</p><SearchField query={query} setQuery={setQuery} /><button className={`${ui.button} ${ui.primaryButton} mt-3`} onClick={clear}>Xem tất cả tin tức <LineIcon /></button></div></section>}
+        </> : <section className="bg-background text-foreground"><div className={`${ui.wrap} flex flex-col items-start gap-5 py-16 md:py-24`}><Search size={34} strokeWidth={1.2} /><h2 className={ui.sectionTitle}>{error || dataError ? 'Không tải được tin tức.' : 'Chưa có tin phù hợp.'}</h2><p role={error || dataError ? 'alert' : undefined} className="text-[13px] text-foreground/65">{error || (appLoading || busy ? 'Đang tải tin tức từ API…' : dataError || 'Thử mã khác hoặc xem lại bộ lọc.')}</p><SearchField query={query} setQuery={setQuery} /><button className={`${ui.button} ${ui.primaryButton} mt-3`} onClick={clear}>Xem tất cả tin tức <LineIcon /></button></div></section>}
       </main>
       <footer className={`${ui.wrap} flex items-center gap-[35px] border-t border-solid border-primary/30 py-[30px] text-[11px] text-primary/80 max-[850px]:flex-wrap max-[560px]:gap-[18px]`}><Link className="mr-auto font-editorial text-2xl leading-none tracking-[0.08em] text-primary" href="/">FINSIGHT</Link><span>© 2026 Finsight</span><p className="max-[850px]:w-full">Tin tức có nguồn, ngày xuất bản và mã cổ phiếu liên quan.</p></footer>
     </div>

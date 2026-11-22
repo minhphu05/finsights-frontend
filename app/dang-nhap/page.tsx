@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ShieldCheck } from '@/components/icons';
-import { APIError, AUTH_STORAGE_KEY, GOOGLE_CLIENT_ID, loginWithGoogle } from '@/lib/api';
+import { APIError, API_UNAVAILABLE_MESSAGE, AUTH_STORAGE_KEY, GOOGLE_CLIENT_ID, loginWithGoogle } from '@/lib/api';
 import { useAppData } from '@/components/shell';
 
 declare global {
@@ -41,8 +41,8 @@ export default function SignInPage() {
           window.dispatchEvent(new Event('finsight-auth-change'));
           router.replace('/');
         } catch (reason) {
-          setError(reason instanceof APIError && reason.status === 0
-            ? 'Không kết nối được API. Hãy thử lại sau.'
+          setError(reason instanceof APIError && (reason.status === 0 || reason.status >= 500)
+            ? API_UNAVAILABLE_MESSAGE
             : 'Đăng nhập Google chưa hoàn tất. Kiểm tra Authorized JavaScript origins và thử lại.');
         } finally { setBusy(false); }
       },

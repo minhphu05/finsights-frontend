@@ -1,6 +1,11 @@
 import type { Article, Stock } from './data';
 
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://finsights-prod-node-01.tail73ddb8.ts.net:10000').replace(/\/$/, '');
+export const API_UNAVAILABLE_MESSAGE = 'Hệ thống đang bị lỗi. Hãy thử tải lại sau ít phút. Xin cảm ơn';
+export const API_BASE_URL = (
+  process.env.NODE_ENV === 'production'
+    ? 'https://api.finsights.biz'
+    : process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8080'
+).replace(/\/$/, '');
 export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1023695913206-ls0utf87gs2a0n4cenc157ia4uho4fep.apps.googleusercontent.com';
 export const AUTH_STORAGE_KEY = 'finsight-access-token';
 
@@ -43,13 +48,23 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
   if (init.body) headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
   let response: Response;
+  const timeout = new AbortController();
+  const timeoutId = window.setTimeout(() => timeout.abort(), 12000);
   try {
-    response = await fetch(`${API_BASE_URL}/api/v1${path}`, { ...init, headers, cache: 'no-store' });
+    response = await fetch(`${API_BASE_URL}/api/v1${path}`, {
+      ...init,
+      headers,
+      cache: 'no-store',
+      signal: init.signal ?? timeout.signal,
+    });
   } catch {
-    throw new APIError('Không kết nối được API. Hãy thử tải lại sau ít phút.', 0);
+    throw new APIError(API_UNAVAILABLE_MESSAGE, 0);
+  } finally {
+    window.clearTimeout(timeoutId);
   }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
+    if (response.status >= 500) throw new APIError(API_UNAVAILABLE_MESSAGE, response.status);
     const message = typeof body?.message === 'string' ? body.message : `API trả về lỗi ${response.status}`;
     throw new APIError(message, response.status);
   }

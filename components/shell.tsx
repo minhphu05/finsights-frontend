@@ -40,6 +40,7 @@ const WatchContext = createContext<AppData>({
 export const useAppData = () => useContext(WatchContext);
 export const useWatch = () => useAppData();
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const initialPathname = usePathname();
   const [watch, setWatch] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
   const [stocksData, setStocksData] = useState<Stock[]>([]);
@@ -51,7 +52,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   useEffect(() => {
     let mounted = true;
-    Promise.allSettled([listAllStocks(), listIndices(), listNews({ limit: 100 })]).then((results) => {
+    const shouldLoadLatestNews = !initialPathname?.startsWith('/tin-tuc');
+    const latestNews = shouldLoadLatestNews ? listNews({ limit: 8 }) : Promise.resolve({ articles: [], total: 0 });
+    Promise.allSettled([listAllStocks(), listIndices(), latestNews]).then((results) => {
       if (!mounted) return;
       const messages: string[] = [];
       if (results[0].status === 'fulfilled') setStocksData(results[0].value);
@@ -60,7 +63,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       else messages.push(results[1].reason instanceof Error ? results[1].reason.message : 'Không tải được chỉ số.');
       if (results[2].status === 'fulfilled') setArticlesData(results[2].value.articles);
       else messages.push(results[2].reason instanceof Error ? results[2].reason.message : 'Không tải được tin tức.');
-      setDataError(messages.length ? messages.join(' ') : null);
+      setDataError(messages.length ? [...new Set(messages)].join(' ') : null);
       setLoading(false);
       try {
         const saved = JSON.parse(localStorage.getItem('nep-watchlist') || '[]');
