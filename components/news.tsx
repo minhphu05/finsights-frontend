@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowUpRight, Search, X } from '@/components/icons';
 import { number, signed } from '@/lib/data';
 import { API_UNAVAILABLE_MESSAGE, listNews, type APIArticle } from '@/lib/api';
@@ -9,6 +9,11 @@ import { homeStyles as ui } from './home-styles';
 import { LineIcon } from './home';
 import { useAppData } from './shell';
 
+// API trả category dạng slug; chỉ các slug này là chủ đề thật. sitemap / sitemap_archive là nhãn nguồn crawl nên hiển thị chung là "Tin tức".
+const CATEGORY_LABELS: Record<string, string> = { stock_market: 'Thị trường', business_finance: 'Doanh nghiệp', macro_economy: 'Vĩ mô', banking: 'Ngân hàng' };
+const categories = ['', ...Object.keys(CATEGORY_LABELS)];
+const labelOf = (category: string) => CATEGORY_LABELS[category] ?? 'Tin tức';
+const slugOf = (topic: string) => Object.entries(CATEGORY_LABELS).find(([, label]) => label === topic)?.[0] ?? topic;
 const tickerChip = 'inline-flex items-center gap-1 border border-solid border-foreground/25 px-2 py-1 text-[10px] tracking-wider text-foreground/80 transition-colors hover:border-foreground hover:text-foreground';
 const searchBox = 'flex w-full items-center gap-3 border-b border-solid border-foreground/40 pb-2.5 text-foreground transition-colors focus-within:border-foreground sm:w-72';
 function SearchField({ query, setQuery }: { query: string; setQuery: (value: string) => void }) {
@@ -20,7 +25,7 @@ function ArticleImage({ src, className = '' }: { src: string; className?: string
 
 export default function News() {
   const params = useSearchParams();
-  const { stocks, articles: latestArticles, loading: appLoading, dataError } = useAppData();
+  const { stocks, loading: appLoading, dataError } = useAppData();
   const [category, setCategory] = useState('');
   const [ticker, setTicker] = useState('');
   const [query, setQuery] = useState('');
@@ -28,12 +33,11 @@ export default function News() {
   const [total, setTotal] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const categories = useMemo(() => ['Tất cả', ...new Set([...latestArticles, ...articles].map((article) => article.category).filter(Boolean))], [latestArticles, articles]);
 
   useEffect(() => {
     setTicker(params.get('ma') || '');
     const topic = params.get('chu-de') || '';
-    setCategory(topic);
+    setCategory(slugOf(topic));
   }, [params]);
   useEffect(() => {
     let active = true;
@@ -67,7 +71,7 @@ export default function News() {
             <p className="mt-6 max-w-[640px] font-editorial text-[17px] leading-[1.65] text-primary/85 max-[560px]:text-[15px]">Tin tức doanh nghiệp được nối với mã cổ phiếu, nguồn xuất bản và liên kết bài gốc.</p>
             <div className="mt-10 flex flex-wrap items-end justify-between gap-6 border-t border-solid border-primary/25 pt-5">
               <div className="-mx-2 flex max-w-full min-w-0 gap-1 overflow-x-auto" aria-label="Chủ đề tin tức">
-                {categories.map((item) => <button key={item} aria-pressed={(category || 'Tất cả') === item} onClick={() => setCategory(item === 'Tất cả' ? '' : item)} className={`relative px-3 py-2 text-xs tracking-wider whitespace-nowrap uppercase transition-colors after:absolute after:inset-x-3 after:-bottom-px after:h-px after:bg-primary after:transition-opacity motion-reduce:transition-none ${(category || 'Tất cả') === item ? 'text-primary after:opacity-100' : 'text-primary/60 after:opacity-0 hover:text-primary'}`}>{item}</button>)}
+                {categories.map((item) => <button key={item} aria-pressed={category === item} onClick={() => setCategory(item)} className={`relative px-3 py-2 text-xs tracking-wider whitespace-nowrap uppercase transition-colors after:absolute after:inset-x-3 after:-bottom-px after:h-px after:bg-primary after:transition-opacity motion-reduce:transition-none ${category === item ? 'text-primary after:opacity-100' : 'text-primary/60 after:opacity-0 hover:text-primary'}`}>{item ? CATEGORY_LABELS[item] : 'Tất cả'}</button>)}
               </div>
               <label className="flex items-center gap-3 text-[11px] text-primary/70">Cổ phiếu<select aria-label="Lọc tin theo cổ phiếu" value={ticker} onChange={(e) => setTicker(e.target.value)} className="cursor-pointer rounded-xs border border-solid border-primary/30 bg-transparent px-3 py-2.5 text-xs text-primary transition-colors hover:border-primary/60 [&>option]:bg-ink"><option value="">Tất cả cổ phiếu</option>{stocks.map((stock) => <option key={stock.symbol} value={stock.symbol}>{stock.symbol} · {stock.short}</option>)}</select></label>
             </div>
@@ -78,13 +82,13 @@ export default function News() {
           <section className="bg-background text-foreground" aria-labelledby="news-featured-title">
             <div className={`${ui.wrap} grid items-center gap-10 py-12 md:grid-cols-[1.25fr_1fr] md:gap-14 md:py-16`}>
               <Link href={`/tin-tuc/${featured.slug}/`} className="group block aspect-[16/10] overflow-hidden"><ArticleImage className="h-full w-full object-cover transition-transform duration-400 group-hover:scale-[1.025] motion-reduce:transition-none" src={featured.image} /></Link>
-              <div><div className="flex items-center gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{featured.category}</span><span aria-hidden="true">·</span><span>{featured.sourceName}</span></div><Link href={`/tin-tuc/${featured.slug}/`} className="group"><h2 id="news-featured-title" className="mt-4 font-editorial text-[clamp(28px,2.6vw,42px)] leading-[1.2] font-normal tracking-[-0.03em] group-hover:underline group-hover:underline-offset-4">{featured.title}</h2></Link><p className="mt-5 text-[13px] leading-7 text-foreground/70">{featured.description}</p><div className="mt-6 flex flex-wrap gap-2">{featured.tickers.map((symbol) => <Link key={symbol} href={`/?ma=${symbol}`} className={tickerChip}>{symbol}<ArrowUpRight size={11} /></Link>)}</div><div className="mt-8 flex items-center justify-between gap-4 border-t border-solid border-foreground/20 pt-5 text-[11px] text-foreground/65"><span>{featured.sourceName} · {featured.time}</span><Link href={featured.sourceURL || `/tin-tuc/${featured.slug}/`} target={featured.sourceURL ? '_blank' : undefined} rel={featured.sourceURL ? 'noreferrer' : undefined} className="flex items-center gap-3 text-xs text-foreground">Đọc nguồn gốc <LineIcon /></Link></div></div>
+              <div><div className="flex items-center gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{labelOf(featured.category)}</span><span aria-hidden="true">·</span><span>{featured.sourceName}</span></div><Link href={`/tin-tuc/${featured.slug}/`} className="group"><h2 id="news-featured-title" className="mt-4 font-editorial text-[clamp(28px,2.6vw,42px)] leading-[1.2] font-normal tracking-[-0.03em] group-hover:underline group-hover:underline-offset-4">{featured.title}</h2></Link><p className="mt-5 text-[13px] leading-7 text-foreground/70">{featured.description}</p><div className="mt-6 flex flex-wrap gap-2">{featured.tickers.map((symbol) => <Link key={symbol} href={`/?ma=${symbol}`} className={tickerChip}>{symbol}<ArrowUpRight size={11} /></Link>)}</div><div className="mt-8 flex items-center justify-between gap-4 border-t border-solid border-foreground/20 pt-5 text-[11px] text-foreground/65"><span>{featured.sourceName} · {featured.time}</span><Link href={featured.sourceURL || `/tin-tuc/${featured.slug}/`} target={featured.sourceURL ? '_blank' : undefined} rel={featured.sourceURL ? 'noreferrer' : undefined} className="flex items-center gap-3 text-xs text-foreground">Đọc nguồn gốc <LineIcon /></Link></div></div>
             </div>
           </section>
           <section className="bg-background text-foreground" aria-labelledby="news-feed-title">
             <div className={`${ui.wrap} grid gap-12 border-t border-solid border-foreground/20 py-12 md:py-16 lg:grid-cols-[1fr_320px] lg:gap-16`}>
-              <div><div className="flex flex-wrap items-end justify-between gap-5"><div><h2 id="news-feed-title" className={ui.sectionTitle}>{ticker ? `Tin về ${ticker}` : category || 'Tin mới nhất'}</h2><p className="mt-3 text-[13px] text-foreground/65">{total.toLocaleString('vi-VN')} bài đã thu thập · hiển thị {articles.length}</p></div><SearchField query={query} setQuery={setQuery} /></div>
-                <div className="mt-8">{articles.slice(1).map((article) => <article key={article.slug} className="group grid grid-cols-[38%_1fr] gap-6 border-t border-solid border-foreground/20 py-7 max-[560px]:grid-cols-1 max-[560px]:gap-4"><Link href={`/tin-tuc/${article.slug}/`} className="block aspect-[16/10] self-start overflow-hidden"><ArticleImage className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.025] motion-reduce:transition-none" src={article.image} /></Link><div className="flex flex-col"><div className="flex items-center justify-between gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{article.category}</span><span>{article.time}</span></div><Link href={`/tin-tuc/${article.slug}/`}><h3 className="mt-3 font-editorial text-[25px] leading-snug font-normal tracking-[-0.02em] group-hover:underline group-hover:underline-offset-4 max-[560px]:text-[22px]">{article.title}</h3></Link><p className="mt-3 text-xs leading-relaxed text-foreground/65">{article.description}</p><div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5"><span className="text-[11px] text-foreground/60">{article.sourceName} · {article.time}</span><div className="flex flex-wrap gap-2">{article.tickers.map((symbol) => <Link key={symbol} href={`/?ma=${symbol}`} className={tickerChip}>{symbol}</Link>)}</div></div></div></article>)}
+              <div><div className="flex flex-wrap items-end justify-between gap-5"><div><h2 id="news-feed-title" className={ui.sectionTitle}>{ticker ? `Tin về ${ticker}` : category ? labelOf(category) : 'Tin mới nhất'}</h2><p className="mt-3 text-[13px] text-foreground/65">{total.toLocaleString('vi-VN')} bài đã thu thập · hiển thị {articles.length}</p></div><SearchField query={query} setQuery={setQuery} /></div>
+                <div className="mt-8">{articles.slice(1).map((article) => <article key={article.slug} className="group grid grid-cols-[38%_1fr] gap-6 border-t border-solid border-foreground/20 py-7 max-[560px]:grid-cols-1 max-[560px]:gap-4"><Link href={`/tin-tuc/${article.slug}/`} className="block aspect-[16/10] self-start overflow-hidden"><ArticleImage className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.025] motion-reduce:transition-none" src={article.image} /></Link><div className="flex flex-col"><div className="flex items-center justify-between gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{labelOf(article.category)}</span><span>{article.time}</span></div><Link href={`/tin-tuc/${article.slug}/`}><h3 className="mt-3 font-editorial text-[25px] leading-snug font-normal tracking-[-0.02em] group-hover:underline group-hover:underline-offset-4 max-[560px]:text-[22px]">{article.title}</h3></Link><p className="mt-3 text-xs leading-relaxed text-foreground/65">{article.description}</p><div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5"><span className="text-[11px] text-foreground/60">{article.sourceName} · {article.time}</span><div className="flex flex-wrap gap-2">{article.tickers.map((symbol) => <Link key={symbol} href={`/?ma=${symbol}`} className={tickerChip}>{symbol}</Link>)}</div></div></div></article>)}
                   {articles.length < total && <button disabled={busy} onClick={loadMore} className={`${ui.button} ${ui.outlineButton} mt-7 disabled:opacity-50`}>{busy ? 'Đang tải…' : 'Tải thêm tin'} <LineIcon /></button>}
                   {error && <p role="alert" className="mt-5 text-sm text-red-700">{error}</p>}
                   {!articles.length && (busy ? <p className="py-8 text-sm text-foreground/65">Đang tải tin tức…</p> : <p className="border-t border-solid border-foreground/20 py-8 text-sm text-foreground/65">Không có bài phù hợp.</p>)}
