@@ -223,7 +223,7 @@ function SideRail({ pathname }: { pathname: string }) {
   );
 }
 // Các trang dùng giao diện Finsight (header trang chủ, tự có footer riêng hoặc không cần footer)
-const isLanding = (pathname: string) => ['', '/tin-tuc', '/chatbot', '/theo-doi'].includes(pathname.replace(/\/$/, '')) || pathname.startsWith('/tin-tuc/');
+const isLanding = (pathname: string) => ['', '/tin-tuc', '/chatbot', '/theo-doi', '/bao-cao-tai-chinh'].includes(pathname.replace(/\/$/, '')) || pathname.startsWith('/tin-tuc/');
 export function Header() {
   const pathname = usePathname();
   const [search, setSearch] = useState(false),
