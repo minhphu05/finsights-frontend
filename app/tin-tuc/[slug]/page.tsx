@@ -12,7 +12,7 @@ function repairArticleSpacing(text: string) {
   return text
     .replace(/([\p{Ll}])([\p{Lu}])/gu, '$1 $2')
     .replace(/(VFF|FIFA)(?=[\p{Ll}]|[\p{Lu}][\p{Ll}])/gu, '$1 ')
-    .replace(/(Bỉ|Mỹ|Nga|Anh|Úc|Ý)(?=[\p{Ll}])/gu, '$1 ')
+    .replace(/(Bỉ)(?=[\p{Ll}])/gu, '$1 ')
     .replace(/(Nam)(?=vẫn|cũng|đã|đang|sẽ|không|có|là|với|trong|sau|trước|tại|này|vừa|tiếp|được)/u, '$1 ')
     .replace(/(U\d{1,3})(?=[\p{Lu}])/gu, '$1 ')
     .replace(/([,;:])(?=\S)/g, '$1 ')
