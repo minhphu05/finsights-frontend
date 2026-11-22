@@ -56,6 +56,13 @@ export default function ArticlePage() {
           <h1>{article.title}</h1>
           <p className="article-deck">{article.description || 'Bài viết từ nguồn tin được thu thập.'}</p>
           <div className="article-meta"><span>{article.category}</span><span><Clock3 size={14} />{article.time}</span></div>
+          <p className="mt-4 inline-flex border border-solid border-foreground/25 px-3 py-1.5 text-[11px] tracking-wide">
+            {article.financialRelevance === 'financial'
+              ? 'Được phân loại: liên quan đến tài chính'
+              : article.financialRelevance === 'needs_review'
+                ? 'Chưa xác minh mức độ liên quan đến tài chính'
+                : `Được phân loại: không liên quan đến tài chính${article.topicLabel === 'sports' ? ' · Thể thao' : ''}`}
+          </p>
           <div className="article-byline"><span className="editor-avatar"><LogoImg size={26} /></span><span><strong>{article.sourceName}</strong><small>{article.publisherCode || 'Nguồn tin'} · {article.time}</small></span></div>
           {article.image && <figure><img src={article.image} alt="" /><figcaption>Ảnh do nguồn tin cung cấp. Vui lòng xem bài gốc để biết đầy đủ bối cảnh.</figcaption></figure>}
           <div className="prose">

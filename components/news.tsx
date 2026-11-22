@@ -14,6 +14,11 @@ const CATEGORY_LABELS: Record<string, string> = { stock_market: 'Thị trường
 const categories = ['', ...Object.keys(CATEGORY_LABELS)];
 const labelOf = (category: string) => CATEGORY_LABELS[category] ?? 'Tin tức';
 const slugOf = (topic: string) => Object.entries(CATEGORY_LABELS).find(([, label]) => label === topic)?.[0] ?? topic;
+const relevanceLabel = (article: APIArticle) => article.financialRelevance === 'financial'
+  ? 'Liên quan tài chính'
+  : article.financialRelevance === 'needs_review'
+    ? 'Chờ rà soát'
+    : article.topicLabel === 'sports' ? 'Thể thao · Ngoài tài chính' : 'Không liên quan tài chính';
 const tickerChip = 'inline-flex items-center gap-1 border border-solid border-foreground/25 px-2 py-1 text-[10px] tracking-wider text-foreground/80 transition-colors hover:border-foreground hover:text-foreground';
 const searchBox = 'flex w-full items-center gap-3 border-b border-solid border-foreground/40 pb-2.5 text-foreground transition-colors focus-within:border-foreground sm:w-72';
 function SearchField({ query, setQuery }: { query: string; setQuery: (value: string) => void }) {
@@ -27,6 +32,7 @@ export default function News() {
   const params = useSearchParams();
   const { stocks, loading: appLoading, dataError } = useAppData();
   const [category, setCategory] = useState('');
+  const [relevance, setRelevance] = useState<'financial' | 'non_financial'>('financial');
   const [ticker, setTicker] = useState('');
   const [query, setQuery] = useState('');
   const [articles, setArticles] = useState<APIArticle[]>([]);
@@ -44,19 +50,19 @@ export default function News() {
     const timer = setTimeout(() => {
       setBusy(true);
       setError('');
-      listNews({ limit: 24, symbol: ticker, category: category && category !== 'Tất cả' ? category : '', query })
+      listNews({ limit: 24, symbol: ticker, category: category && category !== 'Tất cả' ? category : '', query, relevance })
         .then((result) => { if (active) { setArticles(result.articles); setTotal(result.total); setError(''); } })
         .catch((reason) => { if (active) { setError(reason instanceof Error ? reason.message : API_UNAVAILABLE_MESSAGE); setArticles([]); setTotal(0); } })
         .finally(() => { if (active) setBusy(false); });
     }, 220);
     return () => { active = false; clearTimeout(timer); };
-  }, [ticker, category, query]);
+  }, [ticker, category, query, relevance]);
 
   const featured = articles[0];
   const clear = () => { setCategory(''); setTicker(''); setQuery(''); };
   const loadMore = () => {
     setBusy(true);
-    listNews({ limit: 24, offset: articles.length, symbol: ticker, category: category && category !== 'Tất cả' ? category : '', query })
+    listNews({ limit: 24, offset: articles.length, symbol: ticker, category: category && category !== 'Tất cả' ? category : '', query, relevance })
       .then((result) => { setArticles((current) => [...current, ...result.articles]); setTotal(result.total); setError(''); })
       .catch((reason) => setError(reason instanceof Error ? reason.message : API_UNAVAILABLE_MESSAGE))
       .finally(() => setBusy(false));
@@ -69,6 +75,11 @@ export default function News() {
             <p data-hero-intro className={`${ui.eyebrow} mb-5 text-primary/80 max-[560px]:text-[9px] max-[560px]:tracking-[0.19em]`}>DỮ LIỆU TIN TỨC · CÓ NGUỒN VÀ THỜI ĐIỂM</p>
             <h1 id="news-title" className="max-w-[760px] font-editorial text-[clamp(38px,3.55vw,60px)] leading-[1.15] font-normal tracking-[-0.035em] max-[560px]:text-[clamp(32px,8vw,42px)]"><span className="block overflow-hidden py-[0.08em] -my-[0.08em]"><span data-hero-line className="block">Đằng sau những con số.</span></span></h1>
             <p data-hero-intro className="mt-6 max-w-[640px] font-editorial text-[17px] leading-[1.65] text-primary/85 max-[560px]:text-[15px]">Tin tức doanh nghiệp được nối với mã cổ phiếu, nguồn xuất bản và liên kết bài gốc.</p>
+            <div data-hero-intro className="mt-8 flex flex-wrap gap-2" role="group" aria-label="Phân loại mức độ liên quan đến tài chính">
+              <button type="button" aria-pressed={relevance === 'financial'} onClick={() => { setRelevance('financial'); setCategory(''); setTicker(''); }} className={`border border-solid px-4 py-2.5 text-[11px] tracking-wide transition-colors ${relevance === 'financial' ? 'border-primary bg-primary text-ink' : 'border-primary/35 text-primary/75 hover:border-primary hover:text-primary'}`}>Liên quan đến tài chính</button>
+              <button type="button" aria-pressed={relevance === 'non_financial'} onClick={() => { setRelevance('non_financial'); setCategory(''); setTicker(''); }} className={`border border-solid px-4 py-2.5 text-[11px] tracking-wide transition-colors ${relevance === 'non_financial' ? 'border-primary bg-primary text-ink' : 'border-primary/35 text-primary/75 hover:border-primary hover:text-primary'}`}>Ngoài nhóm tài chính</button>
+            </div>
+            <p data-hero-intro className="mt-2 text-[11px] text-primary/60">{relevance === 'financial' ? 'Chỉ hiển thị bài đã qua chốt chất lượng.' : 'Gồm bài được đánh dấu ngoài ngành và bài đang chờ rà soát; nhãn từng bài được hiển thị riêng.'}</p>
             <div data-hero-intro className="mt-10 flex flex-wrap items-end justify-between gap-6 border-t border-solid border-primary/25 pt-5">
               <div className="-mx-2 flex max-w-full min-w-0 gap-1 overflow-x-auto overflow-y-hidden" aria-label="Chủ đề tin tức">
                 {categories.map((item) => <button key={item} aria-pressed={category === item} onClick={() => setCategory(item)} className={`relative px-3 py-2 text-xs tracking-wider whitespace-nowrap uppercase transition-colors after:absolute after:inset-x-3 after:-bottom-px after:h-px after:bg-primary after:transition-opacity motion-reduce:transition-none ${category === item ? 'text-primary after:opacity-100' : 'text-primary/60 after:opacity-0 hover:text-primary'}`}>{item ? CATEGORY_LABELS[item] : 'Tất cả'}</button>)}
@@ -82,13 +93,13 @@ export default function News() {
           <section className="relative z-10 bg-background text-foreground" aria-labelledby="news-featured-title">
             <div className={`${ui.wrap} grid items-center gap-10 py-12 md:grid-cols-[1.25fr_1fr] md:gap-14 md:py-16`}>
               <Link href={`/tin-tuc/${featured.slug}/`} className="group block aspect-[16/10] overflow-hidden"><ArticleImage className="h-full w-full object-cover transition-transform duration-400 group-hover:scale-[1.025] motion-reduce:transition-none" src={featured.image} /></Link>
-              <div><div className="flex items-center gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{labelOf(featured.category)}</span><span aria-hidden="true">·</span><span>{featured.sourceName}</span></div><Link href={`/tin-tuc/${featured.slug}/`} className="group"><h2 id="news-featured-title" className="mt-4 font-editorial text-[clamp(28px,2.6vw,42px)] leading-[1.2] font-normal tracking-[-0.03em] group-hover:underline group-hover:underline-offset-4">{featured.title}</h2></Link><p className="mt-5 text-[13px] leading-7 text-foreground/70">{featured.description}</p><div className="mt-6 flex flex-wrap gap-2">{featured.tickers.map((symbol) => <Link key={symbol} href={`/?ma=${symbol}`} className={tickerChip}>{symbol}<ArrowUpRight size={11} /></Link>)}</div><div className="mt-8 flex items-center justify-between gap-4 border-t border-solid border-foreground/20 pt-5 text-[11px] text-foreground/65"><span>{featured.sourceName} · {featured.time}</span><Link href={featured.sourceURL || `/tin-tuc/${featured.slug}/`} target={featured.sourceURL ? '_blank' : undefined} rel={featured.sourceURL ? 'noreferrer' : undefined} className="flex items-center gap-3 text-xs text-foreground">Đọc nguồn gốc <LineIcon /></Link></div></div>
+              <div><div className="flex flex-wrap items-center gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{labelOf(featured.category)}</span><span aria-hidden="true">·</span><span>{featured.sourceName}</span><span className="border border-solid border-foreground/20 px-2 py-1 normal-case">{relevanceLabel(featured)}</span></div><Link href={`/tin-tuc/${featured.slug}/`} className="group"><h2 id="news-featured-title" className="mt-4 font-editorial text-[clamp(28px,2.6vw,42px)] leading-[1.2] font-normal tracking-[-0.03em] group-hover:underline group-hover:underline-offset-4">{featured.title}</h2></Link><p className="mt-5 text-[13px] leading-7 text-foreground/70">{featured.description}</p><div className="mt-6 flex flex-wrap gap-2">{featured.tickers.map((symbol) => <Link key={symbol} href={`/?ma=${symbol}`} className={tickerChip}>{symbol}<ArrowUpRight size={11} /></Link>)}</div><div className="mt-8 flex items-center justify-between gap-4 border-t border-solid border-foreground/20 pt-5 text-[11px] text-foreground/65"><span>{featured.sourceName} · {featured.time}</span><Link href={featured.sourceURL || `/tin-tuc/${featured.slug}/`} target={featured.sourceURL ? '_blank' : undefined} rel={featured.sourceURL ? 'noreferrer' : undefined} className="flex items-center gap-3 text-xs text-foreground">Đọc nguồn gốc <LineIcon /></Link></div></div>
             </div>
           </section>
           <section className="relative z-10 bg-background text-foreground" aria-labelledby="news-feed-title">
             <div className={`${ui.wrap} grid gap-12 border-t border-solid border-foreground/20 py-12 md:py-16 lg:grid-cols-[1fr_320px] lg:gap-16`}>
-              <div><div className="flex flex-wrap items-end justify-between gap-5"><div><h2 id="news-feed-title" className={ui.sectionTitle}>{ticker ? `Tin về ${ticker}` : category ? labelOf(category) : 'Tin mới nhất'}</h2><p className="mt-3 text-[13px] text-foreground/65">{total.toLocaleString('vi-VN')} bài đã thu thập · hiển thị {articles.length}</p></div><SearchField query={query} setQuery={setQuery} /></div>
-                <div className="mt-8">{articles.slice(1).map((article) => <article key={article.slug} className="group grid grid-cols-[38%_1fr] gap-6 border-t border-solid border-foreground/20 py-7 max-[560px]:grid-cols-1 max-[560px]:gap-4"><Link href={`/tin-tuc/${article.slug}/`} className="block aspect-[16/10] self-start overflow-hidden"><ArticleImage className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.025] motion-reduce:transition-none" src={article.image} /></Link><div className="flex flex-col"><div className="flex items-center justify-between gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{labelOf(article.category)}</span><span>{article.time}</span></div><Link href={`/tin-tuc/${article.slug}/`}><h3 className="mt-3 font-editorial text-[25px] leading-snug font-normal tracking-[-0.02em] group-hover:underline group-hover:underline-offset-4 max-[560px]:text-[22px]">{article.title}</h3></Link><p className="mt-3 text-xs leading-relaxed text-foreground/65">{article.description}</p><div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5"><span className="text-[11px] text-foreground/60">{article.sourceName} · {article.time}</span><div className="flex flex-wrap gap-2">{article.tickers.map((symbol) => <Link key={symbol} href={`/?ma=${symbol}`} className={tickerChip}>{symbol}</Link>)}</div></div></div></article>)}
+              <div><div className="flex flex-wrap items-end justify-between gap-5"><div><h2 id="news-feed-title" className={ui.sectionTitle}>{ticker ? `Tin về ${ticker}` : category ? labelOf(category) : relevance === 'financial' ? 'Tin liên quan đến tài chính' : 'Tin ngoài nhóm tài chính'}</h2><p className="mt-3 text-[13px] text-foreground/65">{total.toLocaleString('vi-VN')} bài đã phân loại · hiển thị {articles.length}</p></div><SearchField query={query} setQuery={setQuery} /></div>
+                <div className="mt-8">{articles.slice(1).map((article) => <article key={article.slug} className="group grid grid-cols-[38%_1fr] gap-6 border-t border-solid border-foreground/20 py-7 max-[560px]:grid-cols-1 max-[560px]:gap-4"><Link href={`/tin-tuc/${article.slug}/`} className="block aspect-[16/10] self-start overflow-hidden"><ArticleImage className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.025] motion-reduce:transition-none" src={article.image} /></Link><div className="flex flex-col"><div className="flex flex-wrap items-center justify-between gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{labelOf(article.category)}</span><span>{article.time}</span><span className="border border-solid border-foreground/20 px-2 py-1 normal-case">{relevanceLabel(article)}</span></div><Link href={`/tin-tuc/${article.slug}/`}><h3 className="mt-3 font-editorial text-[25px] leading-snug font-normal tracking-[-0.02em] group-hover:underline group-hover:underline-offset-4 max-[560px]:text-[22px]">{article.title}</h3></Link><p className="mt-3 text-xs leading-relaxed text-foreground/65">{article.description}</p><div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5"><span className="text-[11px] text-foreground/60">{article.sourceName} · {article.time}</span><div className="flex flex-wrap gap-2">{article.tickers.map((symbol) => <Link key={symbol} href={`/?ma=${symbol}`} className={tickerChip}>{symbol}</Link>)}</div></div></div></article>)}
                   {articles.length < total && <button disabled={busy} onClick={loadMore} className={`${ui.button} ${ui.outlineButton} mt-7 disabled:opacity-50`}>{busy ? 'Đang tải…' : 'Tải thêm tin'} <LineIcon /></button>}
                   {error && <p role="alert" className="mt-5 text-sm text-red-700">{error}</p>}
                   {!articles.length && (busy ? <p className="py-8 text-sm text-foreground/65">Đang tải tin tức…</p> : <p className="border-t border-solid border-foreground/20 py-8 text-sm text-foreground/65">Không có bài phù hợp.</p>)}
