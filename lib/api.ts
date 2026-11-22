@@ -36,6 +36,8 @@ export type FinancialDocument = {
 };
 export type APIArticle = Article & {
   sourceName: string; sourceURL: string; publisherCode: string; publishedAt: number; bodyMarkdown: string;
+  financialRelevance: string; topicLabel: string; qualityDecision: string;
+  qualityConfidence: number; qualityReason: string;
 };
 
 export class APIError extends Error {
@@ -117,6 +119,11 @@ export function mapArticle(value: Record<string, unknown>): APIArticle {
     sourceName: String(value.source_name || 'Nguồn tin'), sourceURL: String(value.source_url || ''),
     publisherCode: String(value.publisher_code || ''), publishedAt,
     bodyMarkdown: String(value.body_markdown || ''),
+    financialRelevance: String(value.financial_relevance || 'needs_review'),
+    topicLabel: String(value.topic_label || 'unclassified'),
+    qualityDecision: String(value.quality_decision || 'review'),
+    qualityConfidence: Number(value.quality_confidence || 0),
+    qualityReason: String(value.quality_reason || 'not_yet_classified'),
   };
 }
 
@@ -134,13 +141,14 @@ export async function listIndices() {
   const data = await request<{ indices?: Record<string, unknown>[] }>('/indices');
   return (data.indices || []).map(mapIndex);
 }
-export async function listNews(options: { limit?: number; offset?: number; symbol?: string; category?: string; query?: string } = {}) {
+export async function listNews(options: { limit?: number; offset?: number; symbol?: string; category?: string; query?: string; relevance?: string } = {}) {
   const params = new URLSearchParams();
   params.set('limit', String(options.limit || 24));
   params.set('offset', String(options.offset || 0));
   if (options.symbol) params.set('symbol', options.symbol);
   if (options.category) params.set('category', options.category);
   if (options.query) params.set('q', options.query);
+  if (options.relevance) params.set('relevance', options.relevance);
   const data = await request<{ articles?: Record<string, unknown>[]; total?: number }>(`/news?${params}`);
   return { articles: (data.articles || []).map(mapArticle), total: Number(data.total || 0) };
 }
