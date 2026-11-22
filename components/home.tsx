@@ -22,7 +22,7 @@ const navigation = [
   { href: '/#ve-finsight', label: 'INSIGHT' },
 ];
 
-const topics = ['Thị trường', 'Doanh nghiệp', 'Phân tích', 'Góc nhìn', 'Vĩ mô'];
+const topics = ['Thị trường', 'Doanh nghiệp', 'Vĩ mô', 'Ngân hàng'];
 const dropdowns: Record<string, { href: string; label: string }[]> = {
   'TIN TỨC': [
     { href: '/tin-tuc/', label: 'Tất cả tin tức' },
