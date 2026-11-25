@@ -46,8 +46,11 @@ export default function LandingMotion() {
       const progress = document.createElement('div');
       progress.className = 'pointer-events-none fixed inset-x-0 top-0 z-50 h-[2px] origin-left bg-market-accent';
       progress.setAttribute('aria-hidden', 'true');
-      document.body.append(progress);
-      gsap.fromTo(progress, { scaleX: 0 }, { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: true } });
+      // The reading progress line belongs to the home page only.
+      if (pathname === '/') {
+        document.body.append(progress);
+        gsap.fromTo(progress, { scaleX: 0 }, { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: true } });
+      }
 
       // Chapter 0 — hero: pinned while the news section slides over it like a curtain.
       // Pinning wraps the hero in a spacer, so it must wait until React has hydrated it (news pages hydrate late behind Suspense).
