@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cache } from 'react';
-import { ArrowLeft, ArrowUpRight, Clock3 } from '@/components/icons';
+import { ArrowLeft, ArrowUpRight } from '@/components/icons';
 import { mapArticle } from '@/lib/api';
 import { publicRequest } from '@/lib/gateway';
-import { Brand, LogoImg } from '@/components/shell';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -55,29 +54,32 @@ export default async function ArticlePage({ params }: Props) {
         <article className="article-body">
           <h1>{article.title}</h1>
           <p className="article-deck">{article.description || 'Bài viết từ nguồn tin được thu thập.'}</p>
-          <div className="article-meta"><span>{article.category}</span><span><Clock3 size={14} />{article.time}</span></div>
-          <p className="mt-4 inline-flex border border-solid border-foreground/25 px-3 py-1.5 text-[11px] tracking-wide">
-            {article.financialRelevance === 'financial'
-              ? 'Được phân loại: liên quan đến tài chính'
-              : article.financialRelevance === 'needs_review'
-                ? 'Chưa xác minh mức độ liên quan đến tài chính'
-                : `Được phân loại: không liên quan đến tài chính${article.topicLabel === 'sports' ? ' · Thể thao' : ''}`}
-          </p>
-          <div className="article-byline"><span className="editor-avatar"><LogoImg size={26} /></span><span><strong>{article.sourceName}</strong><small>{article.publisherCode || 'Nguồn tin'} · {article.time}</small></span></div>
           {article.image && <figure><img src={article.image} alt="" /><figcaption>Ảnh do nguồn tin cung cấp. Vui lòng xem bài gốc để biết đầy đủ bối cảnh.</figcaption></figure>}
           <div className="prose">
             <h2>Nội dung bài viết</h2>
             {articleParagraphs.length > 0
-              ? articleParagraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 32)}`} className="whitespace-pre-wrap">{repairArticleSpacing(paragraph)}</p>)
+              ? articleParagraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 32)}`} className="whitespace-pre-line">{repairArticleSpacing(paragraph)}</p>)
               : <p className="article-demo-note">Nội dung toàn văn chưa có trong dữ liệu của bài viết này.</p>}
             <h2>Nguồn bài viết</h2>
             <p>{article.sourceURL
               ? <a className="article-source-link" href={article.sourceURL} target="_blank" rel="noreferrer" aria-label={`Mở bài gốc trên ${article.sourceName}`}><span>{article.sourceName}</span><span aria-hidden="true">·</span><span>Mở bài gốc</span><ArrowUpRight size={15} /></a>
               : article.sourceName}</p>
           </div>
-          <div className="article-end"><Brand /><span>Hiểu bối cảnh. Thấy rõ chuyển động.</span></div>
         </article>
-        {related.length > 0 && <section className="related-news"><div className="section-heading"><h2>Tin liên quan</h2><Link className="text-link" href="/tin-tuc/">Tất cả tin tức <ArrowUpRight size={16} /></Link></div><div className="related-grid">{related.map((item) => <Link href={`/tin-tuc/${item.slug}/`} key={item.slug} className="plate-rings"><h3>{item.title}</h3><div className="article-meta"><span>{item.category}</span><span>{item.time}</span></div><ArrowUpRight size={21} /></Link>)}</div></section>}
+        {related.length > 0 && (
+          <section className="related-news" aria-labelledby="related-title">
+            <div className="related-heading"><h2 id="related-title">Tin liên quan</h2><Link className="text-link" href="/tin-tuc/">Tất cả tin tức <ArrowUpRight size={16} /></Link></div>
+            <div className="related-grid">
+              {related.map((item) => (
+                <Link href={`/tin-tuc/${item.slug}/`} key={item.slug}>
+                  <div className="related-image">{item.image && <img src={item.image} alt="" loading="lazy" />}</div>
+                  <h3>{item.title}</h3>
+                  <time>{item.time}</time>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );
