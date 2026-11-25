@@ -18,7 +18,9 @@ import {
   Sun,
 } from '@/components/icons';
 import { number, signed, type Stock } from '@/lib/data';
-import { changeWatchlist, getWatchlist, listAllStocks, listIndices, listNews, AUTH_STORAGE_KEY, type APIArticle, type MarketIndex } from '@/lib/api';
+import { listAllStocks, listIndices, listNews, type APIArticle, type MarketIndex } from '@/lib/api';
+import { getSession, signOut as endSession } from '@/lib/auth-actions';
+import { changeWatchlist, getWatchlist } from '@/lib/user-actions';
 
 type AppData = {
   stocks: Stock[];
@@ -29,13 +31,12 @@ type AppData = {
   watch: string[];
   toggle: (symbol: string) => void;
   ready: boolean;
-  accessToken: string | null;
   userEmail: string | null;
   signOut: () => void;
 };
 const WatchContext = createContext<AppData>({
   stocks: [], indices: [], articles: [], loading: true, dataError: null,
-  watch: [], toggle: () => {}, ready: false, accessToken: null, userEmail: null, signOut: () => {},
+  watch: [], toggle: () => {}, ready: false, userEmail: null, signOut: () => {},
 });
 export const useAppData = () => useContext(WatchContext);
 export const useWatch = () => useAppData();
@@ -48,8 +49,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [articlesData, setArticlesData] = useState<APIArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const signedIn = useRef(false);
   useEffect(() => {
     let mounted = true;
     const isAdminRoute = initialPathname?.startsWith('/admin');
@@ -69,37 +70,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         else messages.push(results[2].reason instanceof Error ? results[2].reason.message : 'Không tải được tin tức.');
         setDataError(messages.length ? [...new Set(messages)].join(' ') : null);
         setLoading(false);
-        try {
+        if (!signedIn.current) try {
           const saved = JSON.parse(localStorage.getItem('nep-watchlist') || '[]');
           if (Array.isArray(saved)) setWatch(saved.filter((value): value is string => typeof value === 'string' && results[0].status === 'fulfilled' && results[0].value.some((stock) => stock.symbol === value)));
         } catch {}
       });
     }
-    try {
-      const token = sessionStorage.getItem(AUTH_STORAGE_KEY);
-      const email = sessionStorage.getItem('finsight-user-email');
-      if (token) { setAccessToken(token); setUserEmail(email); }
-    } catch {}
     setReady(true);
-    const authChanged = () => {
-      let token: string | null = null;
-      let email: string | null = null;
-      try {
-        token = sessionStorage.getItem(AUTH_STORAGE_KEY);
-        email = sessionStorage.getItem('finsight-user-email');
-      } catch {}
-      setAccessToken(token);
-      setUserEmail(email);
-      if (token) getWatchlist(token).then((symbols) => setWatch(symbols)).catch(() => setDataError('Không thể đồng bộ danh sách theo dõi.'));
-      else {
+    // On first load the public data above restores the local watchlist for signed-out visitors.
+    const syncSession = async (initial: boolean) => {
+      const session = await getSession().catch(() => undefined);
+      if (!mounted || session === undefined) return;
+      signedIn.current = Boolean(session);
+      setUserEmail(session?.email ?? null);
+      if (session) {
+        const result = await getWatchlist().catch(() => null);
+        if (!mounted) return;
+        if (result?.ok) setWatch(result.data);
+        else if (result?.status === 401) window.dispatchEvent(new Event('finsight-auth-change'));
+        else setDataError('Không thể đồng bộ danh sách theo dõi.');
+      } else if (!initial) {
         try {
           const saved = JSON.parse(localStorage.getItem('nep-watchlist') || '[]');
           if (Array.isArray(saved)) setWatch(saved.filter((value): value is string => typeof value === 'string'));
         } catch { setWatch([]); }
       }
     };
+    const authChanged = () => { syncSession(false); };
     window.addEventListener('finsight-auth-change', authChanged);
-    if (!isAdminRoute && sessionStorage.getItem(AUTH_STORAGE_KEY)) authChanged();
+    syncSession(true);
     return () => { mounted = false; window.removeEventListener('finsight-auth-change', authChanged); };
   }, []);
   // Phần tử .reveal hiện dần khi cuộn tới; theo dõi cả phần tử được thêm sau khi đổi trang.
@@ -135,21 +134,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch {}
       return next;
     });
-    if (accessToken) {
+    if (signedIn.current) {
       const add = !watch.includes(symbol);
-      changeWatchlist(accessToken, symbol, add).then((symbols) => setWatch(symbols)).catch((error) => setDataError(error instanceof Error ? error.message : 'Không thể cập nhật danh sách theo dõi.'));
+      changeWatchlist(symbol, add).then((result) => {
+        if (result.ok) return setWatch(result.data);
+        setDataError(result.message);
+        if (result.status === 401) window.dispatchEvent(new Event('finsight-auth-change'));
+      }).catch(() => setDataError('Không thể cập nhật danh sách theo dõi.'));
     }
   }
   function signOut() {
-    try {
-      sessionStorage.removeItem(AUTH_STORAGE_KEY);
-      sessionStorage.removeItem('finsight-user-email');
-    } catch {}
-    setAccessToken(null);
-    setUserEmail(null);
-    window.dispatchEvent(new Event('finsight-auth-change'));
+    endSession()
+      .then(() => window.dispatchEvent(new Event('finsight-auth-change')))
+      .catch(() => setDataError('Không thể đăng xuất. Hãy thử lại.'));
   }
-  return <WatchContext.Provider value={{ watch, toggle, ready, stocks: stocksData, indices: indicesData, articles: articlesData, loading, dataError, accessToken, userEmail, signOut }}>{children}</WatchContext.Provider>;
+  return <WatchContext.Provider value={{ watch, toggle, ready, stocks: stocksData, indices: indicesData, articles: articlesData, loading, dataError, userEmail, signOut }}>{children}</WatchContext.Provider>;
 }
 // Logo Finsight: chữ F kem #EDE3D1 trên ô nền tối, nên nổi rõ ở cả giao diện sáng lẫn tối.
 export function LogoImg({ size = 30 }: { size?: number }) {

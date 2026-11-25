@@ -1,13 +1,9 @@
 import type { Article, Stock } from './data';
 
 export const API_UNAVAILABLE_MESSAGE = 'Hệ thống đang bị lỗi. Hãy thử tải lại sau ít phút. Xin cảm ơn';
-export const API_BASE_URL = (
-  process.env.NODE_ENV === 'production'
-    ? 'https://finsights-prod-node-01.tail73ddb8.ts.net:10000'
-    : process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8080'
-).replace(/\/$/, '');
-export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1023695913206-ls0utf87gs2a0n4cenc157ia4uho4fep.apps.googleusercontent.com';
-export const AUTH_STORAGE_KEY = 'finsight-access-token';
+// Used by the browser for public data; Next inlines it at build time.
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 export type MarketIndex = {
   symbol: string;
@@ -44,11 +40,14 @@ export class APIError extends Error {
   constructor(message: string, readonly status: number) { super(message); }
 }
 
-async function request<T>(path: string, init: RequestInit = {}, token?: string): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
   if (init.body) headers.set('Content-Type', 'application/json');
-  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (!API_BASE_URL) {
+    console.error('Missing env NEXT_PUBLIC_API_BASE_URL');
+    throw new APIError(API_UNAVAILABLE_MESSAGE, 0);
+  }
   let response: Response;
   const timeout = new AbortController();
   const timeoutId = window.setTimeout(() => timeout.abort(), 12000);
@@ -172,34 +171,4 @@ export async function listFinancialDocuments(options: { symbol?: string; kind?: 
   if (options.symbol) params.set('symbol', options.symbol);
   if (options.kind) params.set('kind', options.kind);
   return request<{ documents?: FinancialDocument[]; total?: number }>(`/financial-reports?${params}`);
-}
-export async function loginWithGoogle(idToken: string) {
-  return request<{ access_token: string; email: string; account_id: string; expires_at_unix_ms: number }>('/auth/google', {
-    method: 'POST', body: JSON.stringify({ id_token: idToken }),
-  });
-}
-export async function getWatchlist(token: string) {
-  const data = await request<{ symbols?: string[] }>('/users/me/watchlist', {}, token);
-  return data.symbols || [];
-}
-export async function changeWatchlist(token: string, symbol: string, add: boolean) {
-  const data = await request<{ symbols?: string[] }>(add ? '/users/me/watchlist' : `/users/me/watchlist/${encodeURIComponent(symbol)}`, {
-    method: add ? 'POST' : 'DELETE', ...(add ? { body: JSON.stringify({ symbol }) } : {}),
-  }, token);
-  return data.symbols || [];
-}
-export async function askAI(token: string, message: string, sessionId = '') {
-  return request<{ session_id: string; answer: string; stock_symbols?: string[]; article_slugs?: string[] }>(
-    '/ai/chat', { method: 'POST', body: JSON.stringify({ message, session_id: sessionId }) }, token,
-  );
-}
-export async function listAISessions(token: string) {
-  const data = await request<{ sessions?: { session_id: string; title: string; updated_at?: string }[] }>('/ai/sessions?limit=20', {}, token);
-  return data.sessions || [];
-}
-export async function getAISessionMessages(token: string, sessionId: string) {
-  return request<{ session_id: string; messages?: { speaker: string; message_text: string; created_at?: string }[] }>(`/ai/sessions/${encodeURIComponent(sessionId)}/messages`, {}, token);
-}
-export async function deleteAISession(token: string, sessionId: string) {
-  return request<{ closed: boolean }>(`/ai/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' }, token);
 }
