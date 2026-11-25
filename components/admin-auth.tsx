@@ -13,12 +13,16 @@ export function useAdminSession() {
   return session;
 }
 
+// Local UI preview only: `next dev` skips the login gate; production builds still enforce it.
+const DEV_ADMIN: AdminProfile | null = process.env.NODE_ENV === 'development' ? { admin_id: 'local-dev', username: 'local-dev' } : null;
+
 export default function AdminAuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [admin, setAdmin] = useState<AdminProfile | null>(null);
-  const [checking, setChecking] = useState(true);
+  const [admin, setAdmin] = useState<AdminProfile | null>(DEV_ADMIN);
+  const [checking, setChecking] = useState(!DEV_ADMIN);
 
   useEffect(() => {
+    if (DEV_ADMIN) return;
     let mounted = true;
     verifyAdminSessionAction().then((result) => {
       if (!mounted) return;

@@ -101,3 +101,53 @@ export async function createAdminAccountAction(username: string, password: strin
   if (!result.ok && /401|403|expired|invalid|access/i.test(result.message)) await clearToken();
   return result;
 }
+
+// Provider keys live in the AI service. Behind the gateway, set AI_SERVICE_URL to its route;
+// `next dev` falls back to a local AI service.
+const AI_SERVICE_URL = (process.env.AI_SERVICE_URL || (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : '')).replace(/\/$/, '');
+
+export type ProviderKey = { provider: string; configured: boolean; last4: string | null; updated_at: string | null };
+export type HealthStatus = 'ok' | 'error' | 'not_configured';
+export type ProviderHealth = { id: string; status: HealthStatus; model: string; default: boolean; keys: string[]; latency_ms: number | null; detail: string | null };
+export type LlmProfileHealth = { status: HealthStatus; models: Record<string, string>; keys: string[]; latency_ms: number | null; detail: string | null };
+export type ProvidersHealth = { status: HealthStatus; embedding: ProviderHealth[]; rerank: ProviderHealth[]; jev: ProviderHealth; llm: Record<string, LlmProfileHealth> };
+
+async function callAiService<T>(path: string, init: RequestInit = {}): Promise<ActionResult<T>> {
+  // Server actions are public endpoints, so a signed-in admin is required outside local dev.
+  if (process.env.NODE_ENV !== 'development') {
+    const session = await verifyAdminSessionAction();
+    if (!session.ok) return session;
+  }
+  if (!AI_SERVICE_URL) return { ok: false, message: 'Chưa cấu hình địa chỉ AI service.' };
+  const headers = new Headers({ Accept: 'application/json' });
+  if (init.body) headers.set('Content-Type', 'application/json');
+  const token = await storedToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  try {
+    const response = await fetch(`${AI_SERVICE_URL}${path}`, { ...init, headers, cache: 'no-store', signal: AbortSignal.timeout(30000) });
+    if (response.status === 204) return { ok: true, data: null as T };
+    const body = await response.json().catch(() => null);
+    if (!response.ok) return { ok: false, message: typeof body?.detail === 'string' ? body.detail : `AI service trả về lỗi ${response.status}.` };
+    if (!body) return { ok: false, message: 'AI service trả về dữ liệu không đọc được.' };
+    return { ok: true, data: body as T };
+  } catch {
+    return { ok: false, message: 'Không kết nối được AI service. Kiểm tra service đã chạy chưa rồi thử lại.' };
+  }
+}
+
+export async function listProviderKeysAction(): Promise<ActionResult<ProviderKey[]>> {
+  const result = await callAiService<{ keys: ProviderKey[] }>('/admin/keys');
+  return result.ok ? { ok: true, data: result.data.keys } : result;
+}
+
+export async function saveProviderKeyAction(provider: string, key: string): Promise<ActionResult<ProviderKey>> {
+  return callAiService<ProviderKey>(`/admin/keys/${encodeURIComponent(provider)}`, { method: 'PUT', body: JSON.stringify({ key }) });
+}
+
+export async function deleteProviderKeyAction(provider: string): Promise<ActionResult<null>> {
+  return callAiService<null>(`/admin/keys/${encodeURIComponent(provider)}`, { method: 'DELETE' });
+}
+
+export async function providersHealthAction(): Promise<ActionResult<ProvidersHealth>> {
+  return callAiService<ProvidersHealth>('/health/providers');
+}
