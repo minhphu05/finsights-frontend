@@ -103,6 +103,8 @@ export function mapIndex(value: Record<string, unknown>): MarketIndex {
     volume: compact(numeric(String(value.volume || '0'))), quoteAt: Number(value.quote_at_unix_ms || 0),
   };
 }
+// Bao Moi links a 300px thumbnail; its CDN serves the same picture at other widths.
+const largerImage = (url: string) => url.replace(/^(https:\/\/photo-baomoi\.bmcdn\.me\/)w\d+(?=_)/, '$1w1000');
 export function mapArticle(value: Record<string, unknown>): APIArticle {
   const publishedAt = Number(value.published_at_unix_ms || 0);
   const symbols = Array.isArray(value.symbols) ? value.symbols.map(String) : [];
@@ -110,7 +112,7 @@ export function mapArticle(value: Record<string, unknown>): APIArticle {
   return {
     slug: String(value.slug || ''), title: String(value.title || ''),
     description: String(value.description || ''), category: String(value.category || 'Tin doanh nghiệp'),
-    tickers: symbols, image: String(value.image_url || ''), time: date,
+    tickers: symbols, image: largerImage(String(value.image_url || '')), time: date,
     read: String(value.source_name || 'Nguồn tin'), body: [],
     sourceName: String(value.source_name || 'Nguồn tin'), sourceURL: String(value.source_url || ''),
     publisherCode: String(value.publisher_code || ''), publishedAt,
