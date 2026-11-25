@@ -102,36 +102,37 @@ export async function createAdminAccountAction(username: string, password: strin
   return result;
 }
 
-// Provider keys live in the AI service. Behind the gateway, set AI_SERVICE_URL to its route;
-// `next dev` falls back to a local AI service.
-const AI_SERVICE_URL = (process.env.AI_SERVICE_URL || (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : '')).replace(/\/$/, '');
-
 export type ProviderKey = { provider: string; configured: boolean; last4: string | null; updated_at: string | null };
 export type HealthStatus = 'ok' | 'error' | 'not_configured';
 export type ProviderHealth = { id: string; status: HealthStatus; model: string; default: boolean; keys: string[]; latency_ms: number | null; detail: string | null };
 export type LlmProfileHealth = { status: HealthStatus; models: Record<string, string>; keys: string[]; latency_ms: number | null; detail: string | null };
 export type ProvidersHealth = { status: HealthStatus; embedding: ProviderHealth[]; rerank: ProviderHealth[]; jev: ProviderHealth; llm: Record<string, LlmProfileHealth> };
 
+// Provider keys live in the AI service, reached through the backend gateway, which checks the
+// admin token. Its errors use `error`, the AI service's use `detail`.
 async function callAiService<T>(path: string, init: RequestInit = {}): Promise<ActionResult<T>> {
-  // Server actions are public endpoints, so a signed-in admin is required outside local dev.
-  if (process.env.NODE_ENV !== 'development') {
-    const session = await verifyAdminSessionAction();
-    if (!session.ok) return session;
-  }
-  if (!AI_SERVICE_URL) return { ok: false, message: 'Chưa cấu hình địa chỉ AI service.' };
-  const headers = new Headers({ Accept: 'application/json' });
-  if (init.body) headers.set('Content-Type', 'application/json');
+  if (!GATEWAY_URL) return { ok: false, message: 'API quản trị chưa được cấu hình.' };
   const token = await storedToken();
-  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (!token) return { ok: false, message: 'Phiên admin đã hết hạn. Hãy đăng nhập lại.' };
+  const headers = new Headers({ Accept: 'application/json', Authorization: `Bearer ${token}` });
+  if (init.body) headers.set('Content-Type', 'application/json');
   try {
-    const response = await fetch(`${AI_SERVICE_URL}${path}`, { ...init, headers, cache: 'no-store', signal: AbortSignal.timeout(30000) });
+    // A health check calls every configured provider, so it gets longer than other admin calls.
+    const response = await fetch(`${GATEWAY_URL}/api/v1/admin/ai${path}`, { ...init, headers, cache: 'no-store', signal: AbortSignal.timeout(30000) });
     if (response.status === 204) return { ok: true, data: null as T };
     const body = await response.json().catch(() => null);
-    if (!response.ok) return { ok: false, message: typeof body?.detail === 'string' ? body.detail : `AI service trả về lỗi ${response.status}.` };
-    if (!body) return { ok: false, message: 'AI service trả về dữ liệu không đọc được.' };
+    if (response.status === 401 || response.status === 403) {
+      await clearToken();
+      return { ok: false, message: 'Phiên admin đã hết hạn. Hãy đăng nhập lại.' };
+    }
+    if (!response.ok) {
+      const message = body?.detail ?? body?.error;
+      return { ok: false, message: typeof message === 'string' ? message : `API trả về lỗi ${response.status}.` };
+    }
+    if (!body) return { ok: false, message: 'API trả về dữ liệu không đọc được.' };
     return { ok: true, data: body as T };
   } catch {
-    return { ok: false, message: 'Không kết nối được AI service. Kiểm tra service đã chạy chưa rồi thử lại.' };
+    return { ok: false, message: 'Không kết nối được API quản trị. Hãy thử lại sau ít phút.' };
   }
 }
 
