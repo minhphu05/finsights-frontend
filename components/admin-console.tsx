@@ -24,15 +24,19 @@ import {
   Layers3,
   LayoutDashboard,
   LockKeyhole,
+  LogOut,
   MessageSquareText,
   Plus,
   Search,
+  ShieldCheck,
   Settings2,
   Sparkles,
   X,
   Zap,
 } from 'lucide-react';
 import { strToU8, zipSync } from 'fflate';
+import { useAdminSession } from '@/components/admin-auth';
+import AdminManagementDialog from '@/components/admin-management-dialog';
 
 type EvaluationCase = {
   question: string;
@@ -331,6 +335,7 @@ function ModelScoreTable({ track }: { track: Track }) {
 }
 
 export default function AdminConsole() {
+  const { admin, signOut } = useAdminSession();
   const [track, setTrack] = useState<Track>('chat');
   const [chatModel, setChatModel] = useState<string>('deepseek-flash');
   const [embeddingModel, setEmbeddingModel] = useState<string>('qwen3-embedding:0.6b');
@@ -340,6 +345,7 @@ export default function AdminConsole() {
   const [dragging, setDragging] = useState(false);
   const [demoReady, setDemoReady] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const modelRows = track === 'chat' ? CHAT_RESULTS : EMBEDDING_RESULTS;
 
@@ -436,13 +442,13 @@ export default function AdminConsole() {
           <div className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-[#d1a353]" /><span className="text-[10px] font-semibold text-[#e4d9c3]">API chưa kết nối</span></div>
           <p className="mt-2 text-[9px] leading-5 text-[#aaa28f]">Giao diện đang ở chế độ thiết kế. Chưa gửi câu hỏi tới model.</p>
         </div>
-        <div className="mt-4 flex items-center gap-2 border-t border-white/10 px-2 pt-4"><div className="grid size-7 place-items-center rounded-full bg-[#d9c79f] text-[10px] font-semibold text-[#2b2a24]">MP</div><span className="min-w-0 flex-1"><strong className="block truncate text-[10px] font-medium">Admin workspace</strong><small className="text-[9px] text-[#938f81]">Personal project</small></span><ChevronDown size={13} className="text-[#8e8a7c]" /></div>
+        <div className="mt-4 flex items-center gap-2 border-t border-white/10 px-2 pt-4"><div className="grid size-7 place-items-center rounded-full bg-[#d9c79f] text-[10px] font-semibold uppercase text-[#2b2a24]">{admin.username.slice(0, 2)}</div><span className="min-w-0 flex-1"><strong className="block truncate text-[10px] font-medium">{admin.username}</strong><small className="text-[9px] text-[#938f81]">Admin</small></span><button type="button" onClick={signOut} title="Đăng xuất admin" aria-label="Đăng xuất admin" className="grid size-7 place-items-center rounded-md text-[#aaa696] hover:bg-white/10 hover:text-white"><LogOut size={14} /></button></div>
       </aside>
 
       <main className="min-h-screen lg:pl-[254px]">
         <div className="sticky top-0 z-20 flex h-[58px] items-center justify-between border-b border-[#e8e3d9] bg-[#f8f7f2]/90 px-5 backdrop-blur-lg sm:px-8">
           <div className="flex items-center gap-2 text-[10px] text-[#87847b]"><span className="font-medium text-[#444239]">Admin</span><ChevronRight size={13} /><span>Model evaluation</span></div>
-          <div className="flex items-center gap-3"><button type="button" className="hidden items-center gap-2 rounded-lg border border-[#e6e1d7] bg-white px-3 py-2 text-[10px] text-[#8c8981] sm:flex" title="Tìm kiếm sẽ kết nối sau"><Search size={13} />Tìm trong console <kbd className="rounded border border-[#ece8df] px-1 py-0.5 text-[8px]">⌘ K</kbd></button><button type="button" aria-label="Thông báo" className="relative grid size-8 place-items-center rounded-lg text-[#6c6a62] hover:bg-white"><Bell size={16} /><span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-[#c38a43]" /></button><div className="grid size-8 place-items-center rounded-full border border-[#dfd7c8] bg-[#eae2d2] text-[10px] font-semibold text-[#615339]">MP</div></div>
+          <div className="flex items-center gap-2 sm:gap-3"><button type="button" onClick={() => setAdminDialogOpen(true)} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e2d8c4] bg-[#fbf7ed] px-2.5 text-[9px] font-medium text-[#725a33] hover:bg-[#f4ead6] sm:px-3 sm:text-[10px]"><ShieldCheck size={13} /><span className="hidden sm:inline">Quản trị viên</span><span className="sm:hidden">Admin</span></button><button type="button" className="hidden items-center gap-2 rounded-lg border border-[#e6e1d7] bg-white px-3 py-2 text-[10px] text-[#8c8981] sm:flex" title="Tìm kiếm sẽ kết nối sau"><Search size={13} />Tìm trong console <kbd className="rounded border border-[#ece8df] px-1 py-0.5 text-[8px]">⌘ K</kbd></button><button type="button" aria-label="Thông báo" className="relative grid size-8 place-items-center rounded-lg text-[#6c6a62] hover:bg-white"><Bell size={16} /><span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-[#c38a43]" /></button><div title={admin.username} className="grid size-8 place-items-center rounded-full border border-[#dfd7c8] bg-[#eae2d2] text-[10px] font-semibold uppercase text-[#615339]">{admin.username.slice(0, 2)}</div></div>
         </div>
 
         <div className="mx-auto max-w-[1440px] px-4 pb-12 pt-7 sm:px-7 lg:px-9">
@@ -498,6 +504,7 @@ export default function AdminConsole() {
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e7e2d8] bg-[#efede7] px-4 py-3 text-[9px] leading-5 text-[#77746b]"><span className="flex items-center gap-2"><LockKeyhole size={13} className="shrink-0 text-[#9a845a]" />Màn hình đang ở chế độ frontend prototype. File JSON được validate cục bộ; chưa có dữ liệu gửi lên API.</span><span className="flex items-center gap-1.5">Metric nền tảng <ArrowUpRight size={12} /></span></div>
         </div>
       </main>
+      {adminDialogOpen && <AdminManagementDialog onClose={() => setAdminDialogOpen(false)} />}
     </div>
   );
 }
