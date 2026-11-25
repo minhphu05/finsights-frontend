@@ -9,6 +9,13 @@ import { number, signed } from '@/lib/data';
 import { useAppData } from '@/components/shell';
 import { MarketSkeleton, Skeleton, SkeletonGroup } from '@/components/skeleton';
 
+// Latest news: two stacked cards of one fixed height, and a lead as tall as both plus the gap between them.
+// The skeletons share these classes, so nothing moves when the articles arrive.
+const newsHeights = '[--news-card:200px] max-[1150px]:[--news-card:170px] max-[850px]:[--news-card:160px] max-[560px]:[--news-card:130px]';
+const newsLead = 'h-[calc(var(--news-card)*2+22px)] min-w-0';
+const newsStack = 'grid min-w-0 grid-rows-[repeat(2,var(--news-card))] gap-[22px]';
+const newsCard = 'grid min-h-0 min-w-0 grid-cols-[44%_minmax(0,1fr)] gap-[23px] max-[1150px]:grid-cols-[38%_minmax(0,1fr)] max-[1150px]:gap-3.5';
+
 export default function Home() {
   const { articles, indices, stocks, loading, dataError } = useAppData();
   const [lead, ...rest] = articles;
@@ -60,33 +67,33 @@ export default function Home() {
         </div>
         </div>
         <section className="relative z-10 bg-background text-foreground" aria-labelledby="fin-news-title">
-          <div className={`${ui.wrap} grid grid-cols-[.75fr_1.45fr_1.3fr] items-stretch gap-[22px] py-12 max-[1150px]:grid-cols-[.65fr_1.2fr_1.1fr] max-[850px]:grid-cols-[1fr_1.3fr] max-[560px]:flex max-[560px]:flex-col max-[560px]:gap-[25px] max-[560px]:py-[34px]`}>
+          <div className={`${ui.wrap} grid grid-cols-[.75fr_1.45fr_1.3fr] items-stretch gap-[22px] py-12 ${newsHeights} max-[1150px]:grid-cols-[.65fr_1.2fr_1.1fr] max-[850px]:grid-cols-[1fr_1.3fr] max-[560px]:flex max-[560px]:flex-col max-[560px]:gap-[25px] max-[560px]:py-[34px]`}>
             <div data-landing-reveal className="flex flex-col items-start py-[35px] max-[1150px]:py-5 max-[850px]:col-span-full max-[850px]:flex-row max-[850px]:flex-wrap max-[850px]:items-center max-[850px]:gap-[22px] max-[850px]:p-0 max-[560px]:grid max-[560px]:gap-3">
               <p className={`${ui.eyebrow} mb-[13px] text-foreground/75 max-[850px]:m-0 max-[560px]:text-[9px]`}>TIN MỚI NHẤT</p>
               <h2 id="fin-news-title" data-split className="font-editorial text-[clamp(32px,3.2vw,52px)] leading-[1.15] font-normal tracking-[-0.04em] max-[850px]:text-4xl">Latest News</h2>
               <span className="my-[34px] h-px w-12 bg-foreground/50 max-[850px]:hidden" />
               <Link href="/tin-tuc/" className="mt-auto flex items-center gap-3.5 text-[13px] max-[850px]:ml-auto max-[560px]:mt-[5px] max-[560px]:ml-0 max-[560px]:text-xs">Xem tất cả tin tức <LineIcon /></Link>
             </div>
-            {lead ? <Link data-landing-reveal="image" href={`/tin-tuc/${lead.slug}/`} className="group relative min-h-[290px] overflow-hidden text-primary max-[560px]:min-h-[300px]">
+            {lead ? <Link data-landing-reveal="image" href={`/tin-tuc/${lead.slug}/`} className={`group relative overflow-hidden text-primary ${newsLead}`}>
               {lead.image ? <img className="absolute h-full w-full object-cover saturate-[0.85] transition-transform duration-400 group-hover:scale-[1.025] motion-reduce:transition-none" src={lead.image} alt="" /> : <div className="absolute inset-0 bg-gradient-to-br from-emerald-950 via-neutral-800 to-neutral-950" />}
               <div className="absolute inset-0 bg-[linear-gradient(transparent_15%,#000d)]" />
               <div className="absolute right-[25px] bottom-5 left-[25px]">
-                <span className="mb-[30px] block text-[10px] uppercase">{lead.category}</span>
-                <h3 className="font-editorial text-[clamp(23px,2vw,34px)] leading-[1.2] font-normal group-hover:underline group-hover:underline-offset-4 max-[560px]:text-[28px]">{lead.title}</h3>
-                <p className="mt-4 text-[11px] text-primary/80">{lead.time} <span className="mx-2">·</span> {lead.sourceName}</p>
+                <span className="mb-[30px] block truncate text-[10px] uppercase max-[560px]:mb-3">{lead.category}</span>
+                <h3 className="line-clamp-3 font-editorial text-[clamp(23px,2vw,34px)] leading-[1.2] font-normal text-pretty group-hover:underline group-hover:underline-offset-4 max-[560px]:text-[22px]">{lead.title}</h3>
+                <p className="mt-4 truncate text-[11px] text-primary/80">{lead.time} <span className="mx-2">·</span> {lead.sourceName}</p>
               </div>
-            </Link> : loading ? <SkeletonGroup label="Đang tải tin tức…" className="flex min-h-[290px] max-[560px]:min-h-[220px]"><Skeleton className="w-full" /></SkeletonGroup> : <div className="grid min-h-[290px] place-items-center border border-primary/20 p-8 text-sm text-primary/75 max-[560px]:min-h-[220px]">{dataError || 'Chưa có tin mới.'}</div>}
-            <div className="grid grid-rows-2 gap-[22px]">
+            </Link> : loading ? <SkeletonGroup label="Đang tải tin tức…" className={`flex ${newsLead}`}><Skeleton className="w-full" /></SkeletonGroup> : <div className={`grid place-items-center border border-primary/20 p-8 text-sm text-primary/75 ${newsLead}`}>{dataError || 'Chưa có tin mới.'}</div>}
+            <div className={newsStack}>
               {loading && !articles.length && [0, 1].map(row => (
-                <div key={row} className="grid grid-cols-[44%_1fr] items-center gap-[23px] max-[1150px]:grid-cols-[38%_1fr] max-[1150px]:gap-3.5 max-[560px]:gap-[18px]"><Skeleton className="h-full min-h-[125px] w-full" /><div><Skeleton className="h-2.5 w-1/3" /><Skeleton className="mt-3 h-5 w-full" /><Skeleton className="mt-2 h-5 w-2/3" /><Skeleton className="mt-5 h-3 w-1/2" /></div></div>
+                <div key={row} className={newsCard}><Skeleton className="h-full w-full" /><div className="self-center"><Skeleton className="h-2.5 w-1/3" /><Skeleton className="mt-3 h-5 w-full" /><Skeleton className="mt-2 h-5 w-2/3" /><Skeleton className="mt-5 h-3 w-1/2" /></div></div>
               ))}
               {rest.slice(0, 2).map(article => (
-                <Link data-landing-reveal="row" className="group grid grid-cols-[44%_1fr] items-center gap-[23px] max-[1150px]:grid-cols-[38%_1fr] max-[1150px]:gap-3.5 max-[560px]:gap-[18px]" href={`/tin-tuc/${article.slug}/`} key={article.slug}>
-                  {article.image ? <img className="h-full max-h-[145px] min-h-[125px] w-full object-cover saturate-[0.85] max-[850px]:min-h-[120px] max-[560px]:max-h-[135px]" src={article.image} alt="" /> : <div className="h-full max-h-[145px] min-h-[125px] w-full bg-foreground/10 max-[850px]:min-h-[120px] max-[560px]:max-h-[135px]" />}
-                  <div>
-                    <span className="text-[9px] tracking-[0.08em] uppercase">{article.category}</span>
-                    <h3 className="mt-1.5 font-editorial text-[clamp(16px,1.25vw,21px)] leading-[1.35] font-normal group-hover:underline group-hover:underline-offset-4 max-[1150px]:text-base max-[560px]:text-[19px]">{article.title}</h3>
-                    <p className="mt-[18px] text-[11px] text-foreground/70">{article.time} <span className="mx-2">·</span> {article.sourceName}</p>
+                <Link data-landing-reveal="row" className={`group ${newsCard}`} href={`/tin-tuc/${article.slug}/`} key={article.slug}>
+                  {article.image ? <img className="h-full min-h-0 w-full object-cover saturate-[0.85]" src={article.image} alt="" /> : <div className="h-full w-full bg-foreground/10" />}
+                  <div className="min-w-0 self-center">
+                    <span className="block truncate text-[9px] tracking-[0.08em] uppercase">{article.category}</span>
+                    <h3 className="mt-1.5 line-clamp-3 font-editorial text-[clamp(16px,1.25vw,21px)] leading-[1.35] font-normal text-pretty group-hover:underline group-hover:underline-offset-4 max-[1150px]:text-base max-[560px]:text-[15px]">{article.title}</h3>
+                    <p className="mt-[18px] truncate text-[11px] text-foreground/70 max-[560px]:mt-2">{article.time} <span className="mx-2">·</span> {article.sourceName}</p>
                   </div>
                 </Link>
               ))}
