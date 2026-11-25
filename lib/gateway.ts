@@ -2,9 +2,9 @@
 // The access token lives in httpOnly cookies and is never readable by browser scripts.
 import 'server-only';
 import { cookies } from 'next/headers';
-import { API_BASE_URL, API_UNAVAILABLE_MESSAGE } from './api';
+import { API_UNAVAILABLE_MESSAGE } from './api';
 
-const GATEWAY_URL = (process.env.API_BASE_URL || API_BASE_URL).replace(/\/$/, '');
+const GATEWAY_URL = (process.env.API_BASE_URL || '').replace(/\/$/, '');
 const TOKEN_COOKIE = 'finsight-session';
 const EMAIL_COOKIE = 'finsight-user-email';
 
@@ -41,6 +41,10 @@ export async function gatewayRequest<T>(path: string, init: RequestInit = {}, to
   headers.set('Accept', 'application/json');
   if (init.body) headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (!GATEWAY_URL) {
+    console.error('Missing env API_BASE_URL');
+    return { ok: false, status: 0, message: API_UNAVAILABLE_MESSAGE };
+  }
   let response: Response;
   try {
     response = await fetch(`${GATEWAY_URL}/api/v1${path}`, {

@@ -30,6 +30,7 @@ export default function SignInPage() {
   const initializeGoogle = useCallback(() => {
     if (!window.google || !button.current || initialized.current) return;
     initialized.current = true;
+    if (!GOOGLE_CLIENT_ID) { setError('Thiếu NEXT_PUBLIC_GOOGLE_CLIENT_ID'); return; }
     window.google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: async ({ credential }) => {

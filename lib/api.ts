@@ -1,12 +1,9 @@
 import type { Article, Stock } from './data';
 
 export const API_UNAVAILABLE_MESSAGE = 'Hệ thống đang bị lỗi. Hãy thử tải lại sau ít phút. Xin cảm ơn';
-export const API_BASE_URL = (
-  process.env.NODE_ENV === 'production'
-    ? 'https://finsights-prod-node-01.tail73ddb8.ts.net:10000'
-    : process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8080'
-).replace(/\/$/, '');
-export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1023695913206-ls0utf87gs2a0n4cenc157ia4uho4fep.apps.googleusercontent.com';
+// Used by the browser for public data; Next inlines it at build time.
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 export type MarketIndex = {
   symbol: string;
@@ -47,6 +44,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
   if (init.body) headers.set('Content-Type', 'application/json');
+  if (!API_BASE_URL) {
+    console.error('Missing env NEXT_PUBLIC_API_BASE_URL');
+    throw new APIError(API_UNAVAILABLE_MESSAGE, 0);
+  }
   let response: Response;
   const timeout = new AbortController();
   const timeoutId = window.setTimeout(() => timeout.abort(), 12000);
