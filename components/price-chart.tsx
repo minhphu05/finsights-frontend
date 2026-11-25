@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Chart, LineController, LineElement, PointElement, LinearScale, Filler, type Plugin } from 'chart.js';
 import { number, type Stock } from '@/lib/data';
 import { getCandles } from '@/lib/api';
+import { Skeleton, SkeletonGroup } from './skeleton';
 import { useAppData } from './shell';
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, Filler);
@@ -124,7 +125,9 @@ export default function PriceChart({ index, stock, range, editorial = false }: {
         <div className={editorial ? 'relative h-[240px] w-full sm:h-[280px]' : 'chart-plot'}>
           <canvas ref={canvas} className="!h-full !w-full" role="img" aria-label={`Biểu đồ ${stock?.symbol || selectedIndex?.name || 'thị trường'}, ${rangeLabels[range]}, dữ liệu giá đã thu thập.`} />
           {values.length > 0 && hover !== null && <div className={editorial ? 'pointer-events-none absolute flex min-w-24 flex-col rounded-xs bg-ink px-3 py-2 text-[11px] text-primary [&>span]:text-[9px]' : 'chart-tooltip'} style={{ left: `clamp(0px, calc(${(active / Math.max(values.length - 1, 1)) * 100}% - 48px), calc(100% - 96px))`, top: '8px' }}><strong>{number(values[active], stock ? 0 : 2)}</strong><span>{pointTime}</span></div>}
-          {!values.length && <div className="absolute inset-0 grid place-items-center px-4 text-center text-xs text-foreground/60">{loading ? 'Đang tải lịch sử giá…' : error || 'Chưa có dữ liệu lịch sử cho khoảng thời gian này.'}</div>}
+          {!values.length && (loading
+            ? <SkeletonGroup label="Đang tải lịch sử giá…" className="absolute inset-0 flex text-foreground"><Skeleton className="w-full" /></SkeletonGroup>
+            : <div className="absolute inset-0 grid place-items-center px-4 text-center text-xs text-foreground/60">{error || 'Chưa có dữ liệu lịch sử cho khoảng thời gian này.'}</div>)}
         </div>
         {values.length > 0 && <div className={editorial ? 'absolute inset-y-0 right-0 flex w-12 flex-col justify-between py-6 text-right text-[10px] text-foreground/60 tabular-nums' : 'chart-y-axis'} aria-hidden="true">{[0, 1, 2, 3].map((position) => <span key={position}>{number(chartMax - ((chartMax - chartMin) * position) / 3, stock ? 0 : 2)}</span>)}</div>}
       </div>

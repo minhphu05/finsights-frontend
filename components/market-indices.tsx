@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import { number, signed } from '@/lib/data';
 import { useAppData } from './shell';
+import { IndexCellsSkeleton } from './skeleton';
 
 export default function MarketIndices({ index, active, onSelect }: {
   index: number;
@@ -70,7 +71,7 @@ export default function MarketIndices({ index, active, onSelect }: {
           </button>
         );
       })}
-      {!indices.length && <p className="col-span-full px-5 py-6 text-sm text-foreground/65">{loading ? 'Đang tải chỉ số thị trường…' : dataError || 'Chưa có dữ liệu chỉ số.'}</p>}
+      {!indices.length && (loading ? <IndexCellsSkeleton /> : <p className="col-span-full px-5 py-6 text-sm text-foreground/65">{dataError || 'Chưa có dữ liệu chỉ số.'}</p>)}
     </div>
   );
 }

@@ -20,7 +20,6 @@ export {
   Sun,
   Moon,
   Menu,
-  Sparkles,
   TableProperties as StockTable,
   ChartLine,
   Turtle,

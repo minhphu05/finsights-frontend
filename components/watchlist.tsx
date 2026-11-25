@@ -6,6 +6,7 @@ import { number, signed } from '@/lib/data';
 import { useWatch } from './shell';
 import { homeStyles as ui } from './home-styles';
 import { LineIcon } from './home';
+import { RowsSkeleton } from './skeleton';
 
 const control = 'rounded-xs border border-solid border-foreground/25 bg-transparent px-3 py-2 text-xs text-foreground transition-colors hover:bg-foreground/5 motion-reduce:transition-none';
 const activeControl = 'rounded-xs border border-solid border-foreground bg-ink px-3 py-2 text-xs text-primary';
@@ -68,7 +69,7 @@ export default function Watchlist() {
                     </tbody>
                   </table>
                 </div>
-              ) : (
+              ) : loading ? <RowsSkeleton label="Đang tải danh sách cổ phiếu…" className="mt-8" /> : (
                 <div className="mt-8 flex flex-col items-start gap-5 border-t border-solid border-foreground/20 py-10">
                   <Search size={34} strokeWidth={1.2} />
                   <h3 className="font-editorial text-[28px] leading-tight font-normal">Chưa có cổ phiếu theo dõi.</h3>
@@ -98,7 +99,7 @@ export default function Watchlist() {
                     </div>
                   );
                 })}
-                {!matches.length && <p className="border-t border-solid border-foreground/20 py-5 text-xs text-foreground/65">Không tìm thấy mã phù hợp.</p>}
+                {!matches.length && (loading ? <RowsSkeleton label="Đang tải cổ phiếu…" rows={4} /> : <p className="border-t border-solid border-foreground/20 py-5 text-xs text-foreground/65">Không tìm thấy mã phù hợp.</p>)}
               </div>
               <section className="bg-ink p-8 text-primary">
                 <h2 className="font-editorial text-[28px] leading-tight font-normal tracking-[-0.02em]">Đọc tin về doanh nghiệp bạn chọn.</h2>

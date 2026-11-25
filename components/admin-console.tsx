@@ -30,7 +30,6 @@ import {
   Search,
   ShieldCheck,
   Settings2,
-  Sparkles,
   X,
   Zap,
 } from 'lucide-react';
@@ -286,7 +285,7 @@ function DemoChart({ track }: { track: Track }) {
     <div className="rounded-2xl border border-[#e9e4da] bg-white p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div><h3 className="text-[14px] font-semibold text-[#272721]">So sánh hiệu năng model</h3><p className="mt-1 text-[11px] text-[#8b8981]">{label} · cùng một bộ câu hỏi</p></div>
-        <StatusPill tone="amber"><Sparkles size={12} /> Số liệu demo</StatusPill>
+        <StatusPill tone="amber">Số liệu demo</StatusPill>
       </div>
       <div className="mt-7 space-y-5">
         {data.map((item) => (
@@ -454,7 +453,7 @@ export default function AdminConsole() {
         <div className="mx-auto max-w-[1440px] px-4 pb-12 pt-7 sm:px-7 lg:px-9">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div><div className="flex flex-wrap items-center gap-2"><SectionLabel>ADMIN CONSOLE</SectionLabel><span className="rounded-full bg-[#ece8dd] px-2 py-0.5 text-[8px] font-semibold tracking-[0.08em] text-[#787467] uppercase">Preview</span></div><h1 className="mt-2 text-[27px] font-semibold tracking-[-0.045em] text-[#24231f] sm:text-[32px]">AI Evaluation Studio</h1><p className="mt-1.5 max-w-[660px] text-[11px] leading-5 text-[#817e75]">Quản lý bộ câu hỏi, so sánh chất lượng chatbot và embedding trên cùng một bộ đánh giá.</p></div>
-            <div className="flex flex-wrap gap-2"><button type="button" onClick={previewRun} className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#d9c9a6] bg-[#f2eadb] px-3.5 text-[10px] font-semibold text-[#765a2c] transition hover:bg-[#ebdfc8]"><Sparkles size={14} />Tạo bản xem trước</button><button type="button" onClick={exportExcel} disabled={!demoReady} className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#171813] px-3.5 text-[10px] font-semibold text-[#f4efe4] transition hover:bg-[#292a22] disabled:cursor-not-allowed disabled:opacity-35"><Download size={14} />Xuất Excel demo</button></div>
+            <div className="flex flex-wrap gap-2"><button type="button" onClick={previewRun} className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#d9c9a6] bg-[#f2eadb] px-3.5 text-[10px] font-semibold text-[#765a2c] transition hover:bg-[#ebdfc8]">Tạo bản xem trước</button><button type="button" onClick={exportExcel} disabled={!demoReady} className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#171813] px-3.5 text-[10px] font-semibold text-[#f4efe4] transition hover:bg-[#292a22] disabled:cursor-not-allowed disabled:opacity-35"><Download size={14} />Xuất Excel demo</button></div>
           </div>
 
           {notice && <div role="status" className="mb-5 flex items-start gap-2 rounded-xl border border-[#ded5c0] bg-[#fbf7ec] px-4 py-3 text-[10px] leading-5 text-[#6b5a3d]"><CircleCheck size={15} className="mt-0.5 shrink-0" /><span className="flex-1">{notice}</span><button type="button" aria-label="Ẩn thông báo" onClick={() => setNotice(null)}><X size={14} /></button></div>}
@@ -491,7 +490,7 @@ export default function AdminConsole() {
           </div>
 
           <section className="mb-5" aria-labelledby="comparison-title">
-            <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><SectionLabel>03 · MODEL COMPARISON</SectionLabel><h2 id="comparison-title" className="mt-1.5 text-[16px] font-semibold tracking-[-0.03em]">Dashboard so sánh</h2><p className="mt-1 text-[10px] text-[#89867e]">Giữ nguyên dataset và metrics để so sánh công bằng giữa các model.</p></div><div className="flex items-center gap-2"><StatusPill tone="amber"><Sparkles size={12} />Dữ liệu mẫu</StatusPill><button type="button" onClick={() => setNotice('Bộ lọc thời gian sẽ nhận dữ liệu từ endpoint evaluation history sau này.')} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e5e0d6] bg-white px-3 text-[9px] text-[#77746c] hover:border-[#cfc4ad]">30 ngày <ChevronDown size={12} /></button></div></div>
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><SectionLabel>03 · MODEL COMPARISON</SectionLabel><h2 id="comparison-title" className="mt-1.5 text-[16px] font-semibold tracking-[-0.03em]">Dashboard so sánh</h2><p className="mt-1 text-[10px] text-[#89867e]">Giữ nguyên dataset và metrics để so sánh công bằng giữa các model.</p></div><div className="flex items-center gap-2"><StatusPill tone="amber">Dữ liệu mẫu</StatusPill><button type="button" onClick={() => setNotice('Bộ lọc thời gian sẽ nhận dữ liệu từ endpoint evaluation history sau này.')} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e5e0d6] bg-white px-3 text-[9px] text-[#77746c] hover:border-[#cfc4ad]">30 ngày <ChevronDown size={12} /></button></div></div>
             <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]"><DemoChart track={track} /><ModelScoreTable track={track} /></div>
           </section>
 
