@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ShieldCheck } from '@/components/icons';
-import { APIError, API_UNAVAILABLE_MESSAGE, AUTH_STORAGE_KEY, GOOGLE_CLIENT_ID, loginWithGoogle } from '@/lib/api';
+import { API_UNAVAILABLE_MESSAGE, GOOGLE_CLIENT_ID } from '@/lib/api';
+import { signInWithGoogle } from '@/lib/auth-actions';
 import { useAppData } from '@/components/shell';
 
 declare global {
@@ -35,15 +36,17 @@ export default function SignInPage() {
         if (!credential) { setError('Google chưa trả về thông tin xác thực.'); return; }
         setBusy(true); setError('');
         try {
-          const response = await loginWithGoogle(credential);
-          sessionStorage.setItem(AUTH_STORAGE_KEY, response.access_token);
-          sessionStorage.setItem('finsight-user-email', response.email);
+          const result = await signInWithGoogle(credential);
+          if (!result.ok) {
+            setError(result.status === 0 || result.status >= 500
+              ? API_UNAVAILABLE_MESSAGE
+              : 'Đăng nhập Google chưa hoàn tất. Kiểm tra Authorized JavaScript origins và thử lại.');
+            return;
+          }
           window.dispatchEvent(new Event('finsight-auth-change'));
           router.replace('/');
-        } catch (reason) {
-          setError(reason instanceof APIError && (reason.status === 0 || reason.status >= 500)
-            ? API_UNAVAILABLE_MESSAGE
-            : 'Đăng nhập Google chưa hoàn tất. Kiểm tra Authorized JavaScript origins và thử lại.');
+        } catch {
+          setError(API_UNAVAILABLE_MESSAGE);
         } finally { setBusy(false); }
       },
       auto_select: false,

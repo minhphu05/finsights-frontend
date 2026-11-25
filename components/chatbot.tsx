@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUp, ArrowUpRight, Ellipsis, PanelLeftClose, PanelLeftOpen, Pencil, Plus, Sparkles, Trash2 } from './icons';
 import { number, signed } from '@/lib/data';
-import { askAI, deleteAISession } from '@/lib/api';
+import { askAI, deleteAISession } from '@/lib/user-actions';
 import { Brand, useAppData } from './shell';
 
 type Refs = { stocks: string[]; articles: string[] };
@@ -29,7 +29,7 @@ function ArticleRef({ slug }: { slug: string }) {
 }
 
 export default function Chatbot() {
-  const { accessToken, userEmail } = useAppData();
+  const { userEmail } = useAppData();
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeId, setActiveId] = useState('');
   const [draft, setDraft] = useState('');
@@ -73,7 +73,7 @@ export default function Chatbot() {
   async function send(raw: string) {
     const text = raw.trim();
     if (!text || busy) return;
-    if (!accessToken) { setLoginRequired(true); setError('Đăng nhập bằng Google để sử dụng trợ lý AI.'); return; }
+    if (userEmail === null) { setLoginRequired(true); setError('Đăng nhập bằng Google để sử dụng trợ lý AI.'); return; }
     setLoginRequired(false); setError(''); setDraft(''); setBusy(true);
     const requestNumber = ++requestRef.current;
     const userMessage: Msg = { id: id(), role: 'user', text };
@@ -84,8 +84,11 @@ export default function Chatbot() {
     else patch(initialId, (chat) => ({ ...chat, messages: [...chat.messages, userMessage, { id: pendingId, role: 'assistant', text: '' }] }));
     try {
       const sessionId = active && !active.id.startsWith('pending-') ? active.id : '';
-      const response = await askAI(accessToken, text, sessionId);
+      const result = await askAI(text, sessionId);
+      if (!result.ok && result.status === 401) window.dispatchEvent(new Event('finsight-auth-change'));
       if (requestNumber !== requestRef.current) return;
+      if (!result.ok) throw new Error(result.message);
+      const response = result.data;
       const resolvedId = response.session_id || initialId;
       setChats((list) => list.map((chat) => chat.id === initialId ? { ...chat, id: resolvedId, messages: chat.messages.map((message) => message.id === pendingId ? { ...message, text: response.answer, refs: { stocks: response.stock_symbols || [], articles: response.article_slugs || [] } } : message) } : chat));
       setActiveId(resolvedId);
@@ -98,7 +101,7 @@ export default function Chatbot() {
   }
 
   function remove(chatId: string) {
-    if (accessToken && !chatId.startsWith('pending-')) deleteAISession(accessToken, chatId).catch(() => {});
+    if (userEmail !== null && !chatId.startsWith('pending-')) deleteAISession(chatId).catch(() => {});
     setChats((list) => list.filter((chat) => chat.id !== chatId));
     if (chatId === activeId) setActiveId('');
   }
