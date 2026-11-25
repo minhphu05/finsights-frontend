@@ -52,24 +52,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   useEffect(() => {
     let mounted = true;
-    const shouldLoadLatestNews = !initialPathname?.startsWith('/tin-tuc');
-    const latestNews = shouldLoadLatestNews ? listNews({ limit: 8 }) : Promise.resolve({ articles: [], total: 0 });
-    Promise.allSettled([listAllStocks(), listIndices(), latestNews]).then((results) => {
-      if (!mounted) return;
-      const messages: string[] = [];
-      if (results[0].status === 'fulfilled') setStocksData(results[0].value);
-      else messages.push(results[0].reason instanceof Error ? results[0].reason.message : 'Không tải được cổ phiếu.');
-      if (results[1].status === 'fulfilled') setIndicesData(results[1].value);
-      else messages.push(results[1].reason instanceof Error ? results[1].reason.message : 'Không tải được chỉ số.');
-      if (results[2].status === 'fulfilled') setArticlesData(results[2].value.articles);
-      else messages.push(results[2].reason instanceof Error ? results[2].reason.message : 'Không tải được tin tức.');
-      setDataError(messages.length ? [...new Set(messages)].join(' ') : null);
+    const isAdminRoute = initialPathname?.startsWith('/admin');
+    if (isAdminRoute) {
       setLoading(false);
-      try {
-        const saved = JSON.parse(localStorage.getItem('nep-watchlist') || '[]');
-        if (Array.isArray(saved)) setWatch(saved.filter((value): value is string => typeof value === 'string' && results[0].status === 'fulfilled' && results[0].value.some((stock) => stock.symbol === value)));
-      } catch {}
-    });
+    } else {
+      const shouldLoadLatestNews = !initialPathname?.startsWith('/tin-tuc');
+      const latestNews = shouldLoadLatestNews ? listNews({ limit: 8 }) : Promise.resolve({ articles: [], total: 0 });
+      Promise.allSettled([listAllStocks(), listIndices(), latestNews]).then((results) => {
+        if (!mounted) return;
+        const messages: string[] = [];
+        if (results[0].status === 'fulfilled') setStocksData(results[0].value);
+        else messages.push(results[0].reason instanceof Error ? results[0].reason.message : 'Không tải được cổ phiếu.');
+        if (results[1].status === 'fulfilled') setIndicesData(results[1].value);
+        else messages.push(results[1].reason instanceof Error ? results[1].reason.message : 'Không tải được chỉ số.');
+        if (results[2].status === 'fulfilled') setArticlesData(results[2].value.articles);
+        else messages.push(results[2].reason instanceof Error ? results[2].reason.message : 'Không tải được tin tức.');
+        setDataError(messages.length ? [...new Set(messages)].join(' ') : null);
+        setLoading(false);
+        try {
+          const saved = JSON.parse(localStorage.getItem('nep-watchlist') || '[]');
+          if (Array.isArray(saved)) setWatch(saved.filter((value): value is string => typeof value === 'string' && results[0].status === 'fulfilled' && results[0].value.some((stock) => stock.symbol === value)));
+        } catch {}
+      });
+    }
     try {
       const token = sessionStorage.getItem(AUTH_STORAGE_KEY);
       const email = sessionStorage.getItem('finsight-user-email');
@@ -94,7 +99,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     };
     window.addEventListener('finsight-auth-change', authChanged);
-    if (sessionStorage.getItem(AUTH_STORAGE_KEY)) authChanged();
+    if (!isAdminRoute && sessionStorage.getItem(AUTH_STORAGE_KEY)) authChanged();
     return () => { mounted = false; window.removeEventListener('finsight-auth-change', authChanged); };
   }, []);
   // Phần tử .reveal hiện dần khi cuộn tới; theo dõi cả phần tử được thêm sau khi đổi trang.
@@ -274,6 +279,7 @@ export function Header() {
   useEffect(() => {
     if (search) input.current?.focus();
   }, [search]);
+  if (pathname.startsWith('/admin')) return null;
   if (pathname.replace(/\/$/, '') === '/chatbot') return null;
   if (isLanding(pathname)) return <HomeHeader />;
   const matches = liveStocks
@@ -426,6 +432,7 @@ export function WatchButton({ symbol, compact = false }: { symbol: string; compa
 }
 export function Footer() {
   const pathname = usePathname();
+  if (pathname.startsWith('/admin')) return null;
   if (isLanding(pathname)) return null;
   return (
     <footer className="site-footer">
