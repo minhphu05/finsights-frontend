@@ -54,7 +54,7 @@ export default async function ArticlePage({ params }: Props) {
         <article className="article-body">
           <h1>{article.title}</h1>
           <p className="article-deck">{article.description || 'Bài viết từ nguồn tin được thu thập.'}</p>
-          {article.image && <figure><img src={article.image} alt="" /><figcaption>Ảnh do nguồn tin cung cấp. Vui lòng xem bài gốc để biết đầy đủ bối cảnh.</figcaption></figure>}
+          {article.image && <figure><img src={article.image} alt="" /></figure>}
           <div className="prose">
             <h2>Nội dung bài viết</h2>
             {articleParagraphs.length > 0
