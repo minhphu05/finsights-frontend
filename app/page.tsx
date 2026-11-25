@@ -7,6 +7,7 @@ import { AssistantButton, LineIcon } from '@/components/home';
 import { homeStyles as ui } from '@/components/home-styles';
 import { number, signed } from '@/lib/data';
 import { useAppData } from '@/components/shell';
+import { MarketSkeleton, Skeleton, SkeletonGroup } from '@/components/skeleton';
 
 export default function Home() {
   const { articles, indices, stocks, loading, dataError } = useAppData();
@@ -29,7 +30,7 @@ export default function Home() {
               Finsight mang đến tin tức tài chính, góc nhìn phân tích chuyên sâu<br className="max-[560px]:hidden" /> và công cụ theo dõi, giúp bạn hiểu thị trường rõ hơn.
             </p>
             <div data-hero-intro className="flex gap-6 max-[560px]:flex-col max-[560px]:items-start max-[560px]:gap-3">
-              <Link href="/tin-tuc/" className={`${ui.button} ${ui.primaryButton}`}>Khám phá tin tức <LineIcon /></Link>
+              <Link href="/tin-tuc/" className={`${ui.button} ${ui.primaryButton}`}>Khám phá tin tức</Link>
               <AssistantButton />
             </div>
           </div>
@@ -43,7 +44,7 @@ export default function Home() {
             <div data-market-loop className="flex w-max animate-market-loop group-hover:[animation-play-state:paused] group-focus-within:[animation-play-state:paused] motion-reduce:animate-none">
               {[0, 1].map(copy => (
                 <div key={copy} aria-hidden={copy === 1 ? true : undefined} className={`flex h-14 min-w-[max(1100px,calc(100vw-220px))] shrink-0 items-center justify-around gap-12 px-6 ${copy === 1 ? 'motion-reduce:hidden' : ''}`}>
-                  {indices.length ? indices.map((item) => (
+                  {loading && !indices.length && !stocks.length ? Array.from({ length: 6 }, (_, item) => <Skeleton key={item} className="h-3 w-32 shrink-0" />) : indices.length ? indices.map((item) => (
                     <a href="#thi-truong" tabIndex={copy === 1 ? -1 : undefined} key={item.symbol} className="flex shrink-0 items-center justify-center gap-3.5 text-[11px] whitespace-nowrap tabular-nums">
                       <strong className="font-medium">{item.name}</strong><span>{number(item.value, 2)}</span><span className={item.percent < 0 ? 'text-red-300' : 'text-green-300'}>{signed(item.percent)}%</span>
                     </a>
@@ -74,8 +75,11 @@ export default function Home() {
                 <h3 className="font-editorial text-[clamp(23px,2vw,34px)] leading-[1.2] font-normal group-hover:underline group-hover:underline-offset-4 max-[560px]:text-[28px]">{lead.title}</h3>
                 <p className="mt-4 text-[11px] text-primary/80">{lead.time} <span className="mx-2">·</span> {lead.sourceName}</p>
               </div>
-            </Link> : <div className="grid min-h-[290px] place-items-center border border-primary/20 p-8 text-sm text-primary/75 max-[560px]:min-h-[220px]">{loading ? 'Đang tải tin tức…' : dataError || 'Chưa có tin mới.'}</div>}
+            </Link> : loading ? <SkeletonGroup label="Đang tải tin tức…" className="flex min-h-[290px] max-[560px]:min-h-[220px]"><Skeleton className="w-full" /></SkeletonGroup> : <div className="grid min-h-[290px] place-items-center border border-primary/20 p-8 text-sm text-primary/75 max-[560px]:min-h-[220px]">{dataError || 'Chưa có tin mới.'}</div>}
             <div className="grid grid-rows-2 gap-[22px]">
+              {loading && !articles.length && [0, 1].map(row => (
+                <div key={row} className="grid grid-cols-[44%_1fr] items-center gap-[23px] max-[1150px]:grid-cols-[38%_1fr] max-[1150px]:gap-3.5 max-[560px]:gap-[18px]"><Skeleton className="h-full min-h-[125px] w-full" /><div><Skeleton className="h-2.5 w-1/3" /><Skeleton className="mt-3 h-5 w-full" /><Skeleton className="mt-2 h-5 w-2/3" /><Skeleton className="mt-5 h-3 w-1/2" /></div></div>
+              ))}
               {rest.slice(0, 2).map(article => (
                 <Link data-landing-reveal="row" className="group grid grid-cols-[44%_1fr] items-center gap-[23px] max-[1150px]:grid-cols-[38%_1fr] max-[1150px]:gap-3.5 max-[560px]:gap-[18px]" href={`/tin-tuc/${article.slug}/`} key={article.slug}>
                   {article.image ? <img className="h-full max-h-[145px] min-h-[125px] w-full object-cover saturate-[0.85] max-[850px]:min-h-[120px] max-[560px]:max-h-[135px]" src={article.image} alt="" /> : <div className="h-full max-h-[145px] min-h-[125px] w-full bg-foreground/10 max-[850px]:min-h-[120px] max-[560px]:max-h-[135px]" />}
@@ -96,7 +100,7 @@ export default function Home() {
               <div><h2 data-split className={ui.sectionTitle}>Nhịp đập thị trường</h2><p className="mt-3 text-[13px] text-foreground/65">Theo dõi cổ phiếu và khám phá dữ liệu thị trường Việt Nam.</p></div>
               <span className="text-[10px] tracking-wider text-foreground/60 uppercase">Việt Nam · HOSE / HNX / UPCOM</span>
             </div>
-            <Suspense fallback={<p className="py-12 text-sm text-foreground/65">Đang mở thị trường…</p>}><HomeMarket /></Suspense>
+            <Suspense fallback={<MarketSkeleton />}><HomeMarket /></Suspense>
           </div>
         </section>
 
@@ -107,6 +111,9 @@ export default function Home() {
               <Link className="flex items-center gap-3 text-xs" href="/tin-tuc/">Tất cả bài viết <LineIcon /></Link>
             </div>
             <div className="grid gap-8 md:grid-cols-3">
+              {loading && !articles.length && [0, 1, 2].map(card => (
+                <div key={card}><Skeleton className="aspect-[16/10] w-full" /><Skeleton className="mt-5 h-2.5 w-1/2" /><Skeleton className="mt-4 h-6 w-full" /><Skeleton className="mt-2 h-6 w-3/4" /><Skeleton className="mt-4 h-3 w-full" /></div>
+              ))}
               {articles.slice(3, 6).map(article => (
                 <Link data-landing-reveal key={article.slug} href={`/tin-tuc/${article.slug}/`} className="group">
                   <div className="aspect-[16/10] overflow-hidden">{article.image ? <img data-scroll-image className="h-full w-full object-cover saturate-[0.85] transition-transform duration-300 group-hover:scale-[1.025]" src={article.image} alt="" loading="lazy" /> : <div className="h-full w-full bg-foreground/10" />}</div>

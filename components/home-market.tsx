@@ -10,6 +10,7 @@ import { LineIcon } from './home';
 import MarketIndices from './market-indices';
 import StockTableHighlight from './stock-table-highlight';
 import { scrollToSection } from '@/lib/scroll';
+import { MarketSkeleton } from './skeleton';
 
 const control = 'rounded-xs border border-solid border-foreground/25 bg-transparent px-4 py-2.5 text-xs text-foreground transition-colors hover:bg-foreground/5 focus-visible:outline-ink disabled:cursor-default disabled:opacity-35';
 const activeControl = 'rounded-xs border border-solid border-foreground bg-ink px-4 py-2.5 text-xs text-primary';
@@ -56,7 +57,7 @@ export default function HomeMarket() {
     if (target) scrollToSection(target, 'center');
   };
 
-  if (loading && !stocks.length) return <div className="py-16 text-sm text-foreground/65">Đang tải dữ liệu thị trường…</div>;
+  if (loading && !stocks.length) return <MarketSkeleton />;
 
   return (
     <div ref={root} className="text-foreground [--chart-grid:color-mix(in_srgb,var(--color-foreground)_15%,transparent)] [--surface:var(--color-background)]">

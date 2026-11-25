@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cache } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Clock3 } from '@/components/icons';
+import { ArrowLeft, ArrowUpRight, Clock3 } from '@/components/icons';
 import { mapArticle } from '@/lib/api';
 import { publicRequest } from '@/lib/gateway';
 import { Brand, LogoImg } from '@/components/shell';
-import ArticleStocks from '@/components/article-stocks';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -51,8 +50,8 @@ export default async function ArticlePage({ params }: Props) {
     .filter(Boolean);
   return (
     <main data-article-page className="container article-page">
-      <Link href="/tin-tuc/" className="back-link"><ArrowLeft size={17} />Trở lại tin tức</Link>
-      <div className="article-layout">
+      <div className="article-column">
+        <Link href="/tin-tuc/" className="back-link"><ArrowLeft size={17} />Trở lại tin tức</Link>
         <article className="article-body">
           <h1>{article.title}</h1>
           <p className="article-deck">{article.description || 'Bài viết từ nguồn tin được thu thập.'}</p>
@@ -78,15 +77,8 @@ export default async function ArticlePage({ params }: Props) {
           </div>
           <div className="article-end"><Brand /><span>Hiểu bối cảnh. Thấy rõ chuyển động.</span></div>
         </article>
-        <aside className="article-sidebar">
-          <h2>Cổ phiếu liên quan</h2>
-          <p>Dữ liệu thị trường mới nhất từ Finsight.</p>
-          <ArticleStocks tickers={article.tickers} />
-          {article.tickers[0] && <Link className="text-link" href={`/bao-cao-tai-chinh/?ma=${article.tickers[0]}`}>Báo cáo tài chính <ArrowRight size={16} /></Link>}
-          <Link className="text-link" href="/">Xem thị trường <ArrowRight size={16} /></Link>
-        </aside>
+        {related.length > 0 && <section className="related-news"><div className="section-heading"><h2>Tin liên quan</h2><Link className="text-link" href="/tin-tuc/">Tất cả tin tức <ArrowUpRight size={16} /></Link></div><div className="related-grid">{related.map((item) => <Link href={`/tin-tuc/${item.slug}/`} key={item.slug} className="plate-rings"><h3>{item.title}</h3><div className="article-meta"><span>{item.category}</span><span>{item.time}</span></div><ArrowUpRight size={21} /></Link>)}</div></section>}
       </div>
-      {related.length > 0 && <section className="related-news"><div className="section-heading"><h2>Tin liên quan</h2><Link className="text-link" href="/tin-tuc/">Tất cả tin tức <ArrowUpRight size={16} /></Link></div><div className="related-grid">{related.map((item) => <Link href={`/tin-tuc/${item.slug}/`} key={item.slug} className="plate-rings"><h3>{item.title}</h3><div className="article-meta"><span>{item.category}</span><span>{item.time}</span></div><ArrowUpRight size={21} /></Link>)}</div></section>}
     </main>
   );
 }
