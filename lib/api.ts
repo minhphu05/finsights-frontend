@@ -1,8 +1,6 @@
 import type { Article, Stock } from './data';
 
 export const API_UNAVAILABLE_MESSAGE = 'Hệ thống đang bị lỗi. Hãy thử tải lại sau ít phút. Xin cảm ơn';
-// Used by the browser for public data; Next inlines it at build time.
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
 export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 export type MarketIndex = {
@@ -40,19 +38,18 @@ export class APIError extends Error {
   constructor(message: string, readonly status: number) { super(message); }
 }
 
+// Browser requests go to this site (app/api/v1), which calls the backend.
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
   if (init.body) headers.set('Content-Type', 'application/json');
-  if (!API_BASE_URL) {
-    console.error('Missing env NEXT_PUBLIC_API_BASE_URL');
-    throw new APIError(API_UNAVAILABLE_MESSAGE, 0);
-  }
+  // next.config sets trailingSlash: ask for that form to avoid a redirect.
+  const [pathname, query] = path.split('?');
   let response: Response;
   const timeout = new AbortController();
   const timeoutId = window.setTimeout(() => timeout.abort(), 12000);
   try {
-    response = await fetch(`${API_BASE_URL}/api/v1${path}`, {
+    response = await fetch(`/api/v1${pathname}/${query ? `?${query}` : ''}`, {
       ...init,
       headers,
       cache: 'no-store',
@@ -109,7 +106,7 @@ export function mapIndex(value: Record<string, unknown>): MarketIndex {
 export function mapArticle(value: Record<string, unknown>): APIArticle {
   const publishedAt = Number(value.published_at_unix_ms || 0);
   const symbols = Array.isArray(value.symbols) ? value.symbols.map(String) : [];
-  const date = publishedAt ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(publishedAt) : 'Thời gian chưa rõ';
+  const date = publishedAt ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(publishedAt) : 'Thời gian chưa rõ';
   return {
     slug: String(value.slug || ''), title: String(value.title || ''),
     description: String(value.description || ''), category: String(value.category || 'Tin doanh nghiệp'),
