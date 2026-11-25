@@ -1,12 +1,30 @@
-'use client';
-
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { cache } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Clock3 } from '@/components/icons';
-import { getNews, listNews, type APIArticle } from '@/lib/api';
-import { number, signed } from '@/lib/data';
-import { Brand, LogoImg, WatchButton, useAppData } from '@/components/shell';
+import { mapArticle } from '@/lib/api';
+import { publicRequest } from '@/lib/gateway';
+import { Brand, LogoImg } from '@/components/shell';
+import ArticleStocks from '@/components/article-stocks';
+
+type Props = { params: Promise<{ slug: string }> };
+
+const loadArticle = cache(async (slug: string) => {
+  const result = await publicRequest<Record<string, unknown>>(`/news/${encodeURIComponent(slug)}`);
+  return result.ok ? { article: mapArticle(result.data), status: 200 } : { article: null, status: result.status };
+});
+
+async function loadRelated(slug: string, symbol?: string) {
+  const params = new URLSearchParams({ limit: '4', offset: '0' });
+  if (symbol) params.set('symbol', symbol);
+  const result = await publicRequest<{ articles?: Record<string, unknown>[] }>(`/news?${params}`);
+  return result.ok ? (result.data.articles || []).map(mapArticle).filter((candidate) => candidate.slug !== slug).slice(0, 3) : [];
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { article } = await loadArticle((await params).slug);
+  return article ? { title: article.title, description: article.description || undefined } : {};
+}
 
 function repairArticleSpacing(text: string) {
   return text
@@ -19,31 +37,14 @@ function repairArticleSpacing(text: string) {
     .replace(/[ \t]{2,}/g, ' ');
 }
 
-export default function ArticlePage() {
-  const params = useParams<{ slug: string }>();
-  const slug = params.slug;
-  const { stocks } = useAppData();
-  const [article, setArticle] = useState<APIArticle | null>(null);
-  const [related, setRelated] = useState<APIArticle[]>([]);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
-  useEffect(() => {
-    let active = true;
-    setStatus('loading');
-    getNews(slug).then((item) => {
-      if (!active) return;
-      setArticle(item); setStatus('ready'); document.title = `${item.title} · Finsight`;
-      return listNews({ limit: 4, symbol: item.tickers[0] }).then((result) => {
-        if (active) setRelated(result.articles.filter((candidate) => candidate.slug !== item.slug).slice(0, 3));
-      });
-    }).catch((error) => {
-      if (active) setStatus(error?.status === 404 ? 'missing' : 'error');
-    });
-    return () => { active = false; };
-  }, [slug]);
-
-  if (status === 'loading') return <main data-article-page className="container py-32 text-sm text-foreground/65">Đang tải bài viết…</main>;
-  if (status !== 'ready' || !article) return <main data-article-page className="container py-32"><h1 className="font-editorial text-4xl">{status === 'missing' ? 'Không tìm thấy bài viết.' : 'Không tải được bài viết.'}</h1><p className="mt-4 text-sm text-foreground/65">{status === 'missing' ? 'Bài viết có thể đã được gỡ khỏi nguồn.' : 'Hãy thử lại sau.'}</p><Link className="mt-7 inline-flex items-center gap-3 text-sm" href="/tin-tuc/"><ArrowLeft size={17} /> Trở lại tin tức</Link></main>;
-  const relatedStocks = stocks.filter((stock) => article.tickers.includes(stock.symbol));
+export default async function ArticlePage({ params }: Props) {
+  const { slug } = await params;
+  const { article, status } = await loadArticle(slug);
+  if (!article) {
+    const missing = status === 404;
+    return <main data-article-page className="container py-32"><h1 className="font-editorial text-4xl">{missing ? 'Không tìm thấy bài viết.' : 'Không tải được bài viết.'}</h1><p className="mt-4 text-sm text-foreground/65">{missing ? 'Bài viết có thể đã được gỡ khỏi nguồn.' : 'Hãy thử lại sau.'}</p><Link className="mt-7 inline-flex items-center gap-3 text-sm" href="/tin-tuc/"><ArrowLeft size={17} /> Trở lại tin tức</Link></main>;
+  }
+  const related = await loadRelated(article.slug, article.tickers[0]);
   const articleParagraphs = article.bodyMarkdown
     .split(/\n{2,}/)
     .map((paragraph) => paragraph.trim())
@@ -80,8 +81,7 @@ export default function ArticlePage() {
         <aside className="article-sidebar">
           <h2>Cổ phiếu liên quan</h2>
           <p>Dữ liệu thị trường mới nhất từ Finsight.</p>
-          {relatedStocks.map((stock) => <div className="article-company" key={stock.symbol}><Link href={`/?ma=${stock.symbol}`}><strong>{stock.symbol}</strong><span className="ml-3 text-xs text-foreground/65">{number(stock.price)} · {signed(stock.change)}%</span><ArrowUpRight size={16} /></Link><WatchButton symbol={stock.symbol} /></div>)}
-          {article.tickers.map((symbol) => !relatedStocks.some((stock) => stock.symbol === symbol) && <div className="article-company" key={symbol}><Link href={`/?ma=${symbol}`}><strong>{symbol}</strong><ArrowUpRight size={16} /></Link><WatchButton symbol={symbol} /></div>)}
+          <ArticleStocks tickers={article.tickers} />
           {article.tickers[0] && <Link className="text-link" href={`/bao-cao-tai-chinh/?ma=${article.tickers[0]}`}>Báo cáo tài chính <ArrowRight size={16} /></Link>}
           <Link className="text-link" href="/">Xem thị trường <ArrowRight size={16} /></Link>
         </aside>

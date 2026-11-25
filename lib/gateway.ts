@@ -1,4 +1,4 @@
-// Server-side only: backend calls that need the user's session.
+// Server-side only: every backend call. The backend URL never reaches the browser.
 // The access token lives in httpOnly cookies and is never readable by browser scripts.
 import 'server-only';
 import { cookies } from 'next/headers';
@@ -50,7 +50,8 @@ export async function gatewayRequest<T>(path: string, init: RequestInit = {}, to
     response = await fetch(`${GATEWAY_URL}/api/v1${path}`, {
       ...init,
       headers,
-      cache: 'no-store',
+      // Calls are uncached unless the caller asks for revalidation.
+      ...(init.next ? {} : { cache: 'no-store' as const }),
       signal: AbortSignal.timeout(12000),
     });
   } catch {
@@ -61,6 +62,11 @@ export async function gatewayRequest<T>(path: string, init: RequestInit = {}, to
   if (response.status >= 500) return { ok: false, status: response.status, message: API_UNAVAILABLE_MESSAGE };
   const message = typeof body?.message === 'string' ? body.message : `API trả về lỗi ${response.status}`;
   return { ok: false, status: response.status, message };
+}
+
+/** Public data, shared between visitors for a minute. */
+export function publicRequest<T>(path: string) {
+  return gatewayRequest<T>(path, { next: { revalidate: 60 } });
 }
 
 /** A request on behalf of the signed-in user. A refused token ends the session. */
