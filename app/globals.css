@@ -2593,15 +2593,20 @@ html[data-theme='dark'] body:has([data-article-page]) {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.related-grid a:hover img {
+  transform: scale(1.025);
 }
 .related-grid h3 {
   font-size: 17px;
   font-weight: 600;
   line-height: 1.45;
 }
-.related-grid a:hover h3 {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+@media (prefers-reduced-motion: reduce) {
+  .related-grid img {
+    transition: none;
+  }
 }
 .related-grid time {
   margin-top: auto;
@@ -4126,5 +4131,20 @@ h1,h2,h3,.brand-name{font-family:var(--font-display)}
   }
   @media (max-width: 640px) {
     .article-page { padding-top: 100px; }
+  }
+}
+
+/* Arrows nudge right when their link or button is hovered. */
+a svg:is(.lucide-arrow-right, .lucide-arrow-up-right):last-child,
+button svg:is(.lucide-arrow-right, .lucide-arrow-up-right):last-child {
+  transition: translate 0.2s ease;
+}
+a:hover svg:is(.lucide-arrow-right, .lucide-arrow-up-right):last-child,
+button:not(:disabled):hover svg:is(.lucide-arrow-right, .lucide-arrow-up-right):last-child {
+  translate: 4px 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  svg:is(.lucide-arrow-right, .lucide-arrow-up-right) {
+    transition: none !important;
   }
 }

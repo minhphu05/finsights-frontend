@@ -42,9 +42,16 @@ export function NewsFeedSkeleton() {
   return (
     <section className="relative z-10 bg-background text-foreground">
       <SkeletonGroup label="Đang tải tin tức…" className={ui.wrap}>
-        <div className="grid items-center gap-10 py-12 md:grid-cols-[1.25fr_1fr] md:gap-14 md:py-16">
-          <Skeleton className="aspect-[16/10] w-full" />
-          <div><Skeleton className="h-3 w-1/3" /><Skeleton className="mt-5 h-9 w-full" /><Skeleton className="mt-3 h-9 w-3/4" /><Skeleton className="mt-6 h-3 w-full" /><Skeleton className="mt-3 h-3 w-5/6" /></div>
+        <div className="grid gap-10 py-12 md:grid-cols-[1.25fr_1fr] md:gap-14 md:py-16">
+          {/* As on the loaded page, the picture is only as tall as the text beside it. */}
+          <Skeleton className="aspect-[16/10] w-full md:aspect-auto md:h-0 md:min-h-full" />
+          <div>
+            <Skeleton className="h-6 w-2/3" />
+            <Skeleton className="mt-5 h-10 w-full" /><Skeleton className="mt-3 h-10 w-3/4" />
+            {times(4).map((line) => <Skeleton key={line} className="mt-4 h-3 w-full" />)}
+            <Skeleton className="mt-6 h-7 w-1/2" />
+            <div className="mt-8 border-t border-solid border-current/15 pt-5"><Skeleton className="h-4 w-full" /></div>
+          </div>
         </div>
         <div className="border-t border-solid border-current/15 py-12 lg:pr-[384px]"><ArticleRowsSkeleton /></div>
       </SkeletonGroup>

@@ -25,7 +25,7 @@ function ArticleRef({ slug }: { slug: string }) {
   const { articles } = useAppData();
   const article = articles.find((item) => item.slug === slug);
   if (!article) return <Link href={`/tin-tuc/${slug}/`} className="border border-solid border-foreground/20 p-3 text-xs">Đọc tin liên quan</Link>;
-  return <Link href={`/tin-tuc/${article.slug}/`} className="group grid grid-cols-[84px_1fr] items-center gap-4 border border-solid border-foreground/20 p-3 transition-colors hover:border-foreground/50"><span className="grid aspect-[4/3] place-items-center bg-foreground/5 text-[9px] text-foreground/50">{article.sourceName}</span><span className="min-w-0"><span className="text-[9px] tracking-wider uppercase text-foreground/65">{article.category} · {article.time}</span><span className="mt-1 block font-editorial text-[15px] leading-snug group-hover:underline group-hover:underline-offset-4">{article.title}</span></span></Link>;
+  return <Link href={`/tin-tuc/${article.slug}/`} className="group grid grid-cols-[84px_1fr] items-center gap-4 border border-solid border-foreground/20 p-3 transition-colors hover:border-foreground/50"><span className="grid aspect-[4/3] place-items-center bg-foreground/5 text-[9px] text-foreground/50">{article.sourceName}</span><span className="min-w-0"><span className="text-[9px] tracking-wider uppercase text-foreground/65">{article.category} · {article.time}</span><span className="mt-1 block font-editorial text-[15px] leading-snug">{article.title}</span></span></Link>;
 }
 
 export default function Chatbot() {

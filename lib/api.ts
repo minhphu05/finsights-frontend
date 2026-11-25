@@ -139,16 +139,17 @@ export async function listIndices() {
   const data = await request<{ indices?: Record<string, unknown>[] }>('/indices');
   return (data.indices || []).map(mapIndex);
 }
-export async function listNews(options: { limit?: number; offset?: number; symbol?: string; category?: string; query?: string; relevance?: string } = {}) {
+export async function listNews(options: { limit?: number; offset?: number; cursor?: string; symbol?: string; category?: string; query?: string; relevance?: string } = {}) {
   const params = new URLSearchParams();
   params.set('limit', String(options.limit || 24));
   params.set('offset', String(options.offset || 0));
+  if (options.cursor) params.set('cursor', options.cursor);
   if (options.symbol) params.set('symbol', options.symbol);
   if (options.category) params.set('category', options.category);
   if (options.query) params.set('q', options.query);
   if (options.relevance) params.set('relevance', options.relevance);
-  const data = await request<{ articles?: Record<string, unknown>[]; total?: number }>(`/news?${params}`);
-  return { articles: (data.articles || []).map(mapArticle), total: Number(data.total || 0) };
+  const data = await request<{ articles?: Record<string, unknown>[]; total?: number; next_cursor?: string }>(`/news?${params}`);
+  return { articles: (data.articles || []).map(mapArticle), total: Number(data.total || 0), nextCursor: data.next_cursor || '' };
 }
 export async function getNews(slug: string) {
   const data = await request<Record<string, unknown>>(`/news/${encodeURIComponent(slug)}`);

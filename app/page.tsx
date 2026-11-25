@@ -9,12 +9,13 @@ import { number, signed } from '@/lib/data';
 import { useAppData } from '@/components/shell';
 import { MarketSkeleton, Skeleton, SkeletonGroup } from '@/components/skeleton';
 
-// Latest news: two stacked cards of one fixed height, and a lead as tall as both plus the gap between them.
-// The skeletons share these classes, so nothing moves when the articles arrive.
-const newsHeights = '[--news-card:200px] max-[1150px]:[--news-card:170px] max-[850px]:[--news-card:160px] max-[560px]:[--news-card:130px]';
+// : two stacked cards exactly as tall as their text (category, 3 title lines, meta), and a lead
+// as tall as both plus the gap between them. The skeletons share these classes, so nothing moves when the articles arrive.
+// 4.05 = 3 title lines × 1.35 line height; the rest is category, meta and the margins between them.
+const newsHeights = '[--news-title:clamp(16px,1.25vw,21px)] max-[1150px]:[--news-title:16px] max-[560px]:[--news-title:15px] [--news-card:calc(var(--news-title)*4.05+54px)] max-[560px]:[--news-card:calc(var(--news-title)*4.05+44px)]';
 const newsLead = 'h-[calc(var(--news-card)*2+22px)] min-w-0';
-const newsStack = 'grid min-w-0 grid-rows-[repeat(2,var(--news-card))] gap-[22px]';
-const newsCard = 'grid min-h-0 min-w-0 grid-cols-[44%_minmax(0,1fr)] gap-[23px] max-[1150px]:grid-cols-[38%_minmax(0,1fr)] max-[1150px]:gap-3.5';
+const newsStack = 'grid min-w-0 grid-rows-[repeat(2,var(--news-card))] content-start gap-[22px]';
+const newsCard = 'grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] grid-cols-[44%_minmax(0,1fr)] gap-[23px] max-[1150px]:grid-cols-[38%_minmax(0,1fr)] max-[1150px]:gap-3.5';
 
 export default function Home() {
   const { articles, indices, stocks, loading, dataError } = useAppData();
@@ -71,29 +72,28 @@ export default function Home() {
             <div data-landing-reveal className="flex flex-col items-start py-[35px] max-[1150px]:py-5 max-[850px]:col-span-full max-[850px]:flex-row max-[850px]:flex-wrap max-[850px]:items-center max-[850px]:gap-[22px] max-[850px]:p-0 max-[560px]:grid max-[560px]:gap-3">
               <p className={`${ui.eyebrow} mb-[13px] text-foreground/75 max-[850px]:m-0 max-[560px]:text-[9px]`}>TIN MỚI NHẤT</p>
               <h2 id="fin-news-title" data-split className="font-editorial text-[clamp(32px,3.2vw,52px)] leading-[1.15] font-normal tracking-[-0.04em] max-[850px]:text-4xl">Latest News</h2>
-              <span className="my-[34px] h-px w-12 bg-foreground/50 max-[850px]:hidden" />
               <Link href="/tin-tuc/" className="mt-auto flex items-center gap-3.5 text-[13px] max-[850px]:ml-auto max-[560px]:mt-[5px] max-[560px]:ml-0 max-[560px]:text-xs">Xem tất cả tin tức <LineIcon /></Link>
             </div>
             {lead ? <Link data-landing-reveal="image" href={`/tin-tuc/${lead.slug}/`} className={`group relative overflow-hidden text-primary ${newsLead}`}>
-              {lead.image ? <img className="absolute h-full w-full object-cover saturate-[0.85] transition-transform duration-400 group-hover:scale-[1.025] motion-reduce:transition-none" src={lead.image} alt="" /> : <div className="absolute inset-0 bg-gradient-to-br from-emerald-950 via-neutral-800 to-neutral-950" />}
+              {lead.image ? <img className="absolute h-full w-full object-cover saturate-[0.85] transition-transform duration-400 group-hover:scale-[1.025]! motion-reduce:transition-none" src={lead.image} alt="" /> : <div className="absolute inset-0 bg-gradient-to-br from-emerald-950 via-neutral-800 to-neutral-950" />}
               <div className="absolute inset-0 bg-[linear-gradient(transparent_15%,#000d)]" />
               <div className="absolute right-[25px] bottom-5 left-[25px]">
                 <span className="mb-[30px] block truncate text-[10px] uppercase max-[560px]:mb-3">{lead.category}</span>
-                <h3 className="line-clamp-3 font-editorial text-[clamp(23px,2vw,34px)] leading-[1.2] font-normal text-pretty group-hover:underline group-hover:underline-offset-4 max-[560px]:text-[22px]">{lead.title}</h3>
+                <h3 className="line-clamp-3 font-editorial text-[clamp(23px,2vw,34px)] leading-[1.2] font-normal text-pretty max-[560px]:text-[22px]">{lead.title}</h3>
                 <p className="mt-4 truncate text-[11px] text-primary/80">{lead.time} <span className="mx-2">·</span> {lead.sourceName}</p>
               </div>
             </Link> : loading ? <SkeletonGroup label="Đang tải tin tức…" className={`flex ${newsLead}`}><Skeleton className="w-full" /></SkeletonGroup> : <div className={`grid place-items-center border border-primary/20 p-8 text-sm text-primary/75 ${newsLead}`}>{dataError || 'Chưa có tin mới.'}</div>}
             <div className={newsStack}>
               {loading && !articles.length && [0, 1].map(row => (
-                <div key={row} className={newsCard}><Skeleton className="h-full w-full" /><div className="self-center"><Skeleton className="h-2.5 w-1/3" /><Skeleton className="mt-3 h-5 w-full" /><Skeleton className="mt-2 h-5 w-2/3" /><Skeleton className="mt-5 h-3 w-1/2" /></div></div>
+                <div key={row} className={newsCard}><Skeleton className="h-0 min-h-full w-full" /><div><Skeleton className="h-2.5 w-1/3" /><Skeleton className="mt-3 h-5 w-full" /><Skeleton className="mt-2 h-5 w-2/3" /><Skeleton className="mt-5 h-3 w-1/2" /></div></div>
               ))}
               {rest.slice(0, 2).map(article => (
                 <Link data-landing-reveal="row" className={`group ${newsCard}`} href={`/tin-tuc/${article.slug}/`} key={article.slug}>
-                  {article.image ? <img className="h-full min-h-0 w-full object-cover saturate-[0.85]" src={article.image} alt="" /> : <div className="h-full w-full bg-foreground/10" />}
-                  <div className="min-w-0 self-center">
-                    <span className="block truncate text-[9px] tracking-[0.08em] uppercase">{article.category}</span>
-                    <h3 className="mt-1.5 line-clamp-3 font-editorial text-[clamp(16px,1.25vw,21px)] leading-[1.35] font-normal text-pretty group-hover:underline group-hover:underline-offset-4 max-[1150px]:text-base max-[560px]:text-[15px]">{article.title}</h3>
-                    <p className="mt-[18px] truncate text-[11px] text-foreground/70 max-[560px]:mt-2">{article.time} <span className="mx-2">·</span> {article.sourceName}</p>
+                  <div className="relative h-0 min-h-full overflow-hidden">{article.image ? <img className="absolute inset-0 h-full w-full object-cover saturate-[0.85] transition-transform duration-300 group-hover:scale-[1.025] motion-reduce:transition-none" src={article.image} alt="" /> : <div className="absolute inset-0 bg-foreground/10" />}</div>
+                  <div className="min-w-0">
+                    <span className="block truncate text-[9px] leading-[14px] tracking-[0.08em] uppercase">{article.category}</span>
+                    <h3 className="mt-1.5 line-clamp-3 min-h-[calc(var(--news-title)*4.05)] font-editorial text-[length:var(--news-title)] leading-[1.35] font-normal text-pretty">{article.title}</h3>
+                    <p className="mt-[18px] truncate text-[11px] leading-4 text-foreground/70 max-[560px]:mt-2">{article.time} <span className="mx-2">·</span> {article.sourceName}</p>
                   </div>
                 </Link>
               ))}
@@ -123,9 +123,9 @@ export default function Home() {
               ))}
               {articles.slice(3, 6).map(article => (
                 <Link data-landing-reveal key={article.slug} href={`/tin-tuc/${article.slug}/`} className="group">
-                  <div className="aspect-[16/10] overflow-hidden">{article.image ? <img data-scroll-image className="h-full w-full object-cover saturate-[0.85] transition-transform duration-300 group-hover:scale-[1.025]" src={article.image} alt="" loading="lazy" /> : <div className="h-full w-full bg-foreground/10" />}</div>
+                  <div className="aspect-[16/10] overflow-hidden">{article.image ? <img data-scroll-image className="h-full w-full object-cover saturate-[0.85] transition-transform duration-300 group-hover:scale-[1.025]!" src={article.image} alt="" loading="lazy" /> : <div className="h-full w-full bg-foreground/10" />}</div>
                   <div className="mt-5 flex items-center justify-between gap-3 text-[10px] tracking-wider text-foreground/65 uppercase"><span>{article.category}</span><span>{article.sourceName}</span></div>
-                  <h3 className="mt-3 font-editorial text-[25px] leading-snug font-normal tracking-[-0.02em] group-hover:underline group-hover:underline-offset-4">{article.title}</h3>
+                  <h3 className="mt-3 font-editorial text-[25px] leading-snug font-normal tracking-[-0.02em]">{article.title}</h3>
                   <p className="mt-3 text-xs leading-relaxed text-foreground/65">{article.description}</p>
                   <span className="mt-5 flex items-center gap-3 text-xs">Đọc bài viết <LineIcon /></span>
                 </Link>
