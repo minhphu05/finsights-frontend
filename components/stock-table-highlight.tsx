@@ -6,7 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 type Bounds = { top: number; left: number; width: number; height: number };
 
 /** Shared hover background matching the reference sidebar's parent Highlight spring. */
-export default function StockTableHighlight({ children }: { children: ReactNode }) {
+/** Rows carrying `attribute` get the highlight; the admin tables pass their own. */
+export default function StockTableHighlight({ children, attribute = 'data-stock-row' }: { children: ReactNode; attribute?: string }) {
   const root = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
@@ -18,7 +19,7 @@ export default function StockTableHighlight({ children }: { children: ReactNode 
     const container = root.current;
     if (!container) return;
     const measure = () => {
-      const row = active ? container.querySelector<HTMLElement>(`tr[data-stock-row="${CSS.escape(active)}"]`) : null;
+      const row = active ? container.querySelector<HTMLElement>(`tr[${attribute}="${CSS.escape(active)}"]`) : null;
       if (!row) { setBounds(null); return; }
       const rect = row.getBoundingClientRect();
       const parent = container.getBoundingClientRect();
@@ -31,9 +32,9 @@ export default function StockTableHighlight({ children }: { children: ReactNode 
     const table = container.querySelector('table');
     if (table) observer.observe(table);
     return () => observer.disconnect();
-  }, [active, children]);
+  }, [active, attribute, children]);
 
-  const rowKey = (target: EventTarget | null) => target instanceof Element ? target.closest<HTMLElement>('tr[data-stock-row]')?.dataset.stockRow ?? null : null;
+  const rowKey = (target: EventTarget | null) => target instanceof Element ? target.closest(`tr[${attribute}]`)?.getAttribute(attribute) ?? null : null;
 
   return (
     <div ref={root} className="relative isolate min-w-[690px]" onPointerOver={event => { if (event.pointerType !== 'touch') setHovered(rowKey(event.target)); }} onPointerLeave={() => setHovered(null)} onPointerCancel={() => setHovered(null)} onFocusCapture={event => setFocused(rowKey(event.target))} onBlurCapture={event => setFocused(rowKey(event.relatedTarget))}>

@@ -70,11 +70,11 @@ function validateDataset(value: unknown): EvaluationCase[] {
   });
 }
 
-type Cell = string | number | boolean;
+export type Cell = string | number | boolean;
 const xmlEscape = (v: string) => v.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
 const column = (n: number): string => (n > 0 ? column(Math.floor((n - 1) / 26)) + String.fromCharCode(65 + ((n - 1) % 26)) : '');
 
-function workbook(sheets: { name: string; rows: Cell[][] }[]) {
+export function workbook(sheets: { name: string; rows: Cell[][] }[]) {
   const ns = 'http://schemas.openxmlformats.org';
   const head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
   const sheetXml = (rows: Cell[][]) => `${head}<worksheet xmlns="${ns}/spreadsheetml/2006/main"><sheetData>${rows.map((row, r) => `<row r="${r + 1}">${row.map((value, c) => {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Check, Download, Search, X } from 'lucide-react';
-import { Badge, PageHeader, SourceNote, button, control, download, panel, td, th } from './ui';
+import { AdminSelect, Badge, PageHeader, SourceNote, button, control, download, panel, td, th } from './ui';
 
 // Same fields the AI service stores per turn (message columns + ai_trace).
 type ToolCall = { name: string; args: Record<string, unknown>; ok: boolean };
@@ -79,8 +79,8 @@ export default function TraceLogs() {
           <Search size={14} strokeWidth={1.5} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-foreground/60" />
           <input className={`${control} w-full pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm câu hỏi, email, session, mã lượt" aria-label="Tìm trace" />
         </label>
-        <select className={control} value={filter} onChange={(e) => setFilter(e.target.value as Filter)} aria-label="Lọc theo trạng thái">{FILTERS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
-        <select className={control} value={tool} onChange={(e) => setTool(e.target.value)} aria-label="Lọc theo tool"><option value="">Mọi tool</option>{TOOLS.map((name) => <option key={name}>{name}</option>)}</select>
+        <div className="w-[180px]"><AdminSelect hideLabel mono={false} label="Lọc theo trạng thái" value={filter} options={FILTERS} onChange={(next) => setFilter(next as Filter)} /></div>
+        <div className="w-[200px]"><AdminSelect hideLabel mono={false} label="Lọc theo tool" value={tool} options={[['', 'Mọi tool'], ...TOOLS.map((name) => [name, name] as const)]} onChange={setTool} /></div>
       </div>
 
       <div className="mt-4 grid items-start gap-4 2xl:grid-cols-[minmax(0,1.5fr)_minmax(360px,1fr)]">
