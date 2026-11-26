@@ -1,6 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { Select } from '@animate-ui/react/primitives/base-ui/select';
+import { Check, ChevronDown } from 'lucide-react';
 
 /* Shared admin primitives, built on the same tokens as the chatbot: paper background,
    ink foreground, hairline borders, square corners, one bronze accent. */
@@ -63,4 +65,29 @@ export function download(name: string, content: BlobPart, type: string) {
   anchor.download = name;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+/** Dropdown with the same sliding highlight as the site's other menus. `hideLabel` keeps the label for screen readers only. */
+export function AdminSelect({ label, value, options, onChange, hideLabel = false, mono = true }: { label: string; value: string; options: readonly (readonly [string, string])[]; onChange: (value: string) => void; hideLabel?: boolean; mono?: boolean }) {
+  const font = mono ? 'font-mono' : '';
+  return (
+    <Select.Root value={value} onValueChange={(next) => next !== null && onChange(next)} modal={false}>
+      <div className="min-w-0 text-xs">
+        {!hideLabel && <span className="mb-2 block text-foreground/70">{label}</span>}
+        <Select.Trigger aria-label={label} className={`${control} group flex w-full cursor-pointer items-center justify-between gap-3 data-[popup-open]:border-foreground`}>
+          <span className={`truncate ${font}`}>{options.find(([id]) => id === value)?.[1]}</span>
+          <ChevronDown size={14} strokeWidth={1.6} aria-hidden="true" className="shrink-0 transition-transform duration-300 group-data-[popup-open]:rotate-180 motion-reduce:transition-none" />
+        </Select.Trigger>
+      </div>
+      <Select.Portal>
+        <Select.Positioner alignItemWithTrigger={false} sideOffset={6} className="z-50 outline-none">
+          <Select.Popup className="w-[var(--anchor-width)] overflow-hidden rounded-xs border border-solid border-foreground/20 bg-background py-1.5 font-sans text-foreground shadow-xl shadow-black/15 outline-none">
+            <Select.List data-lenis-prevent className="isolate max-h-[min(348px,calc(var(--available-height)-14px))] overflow-x-hidden overflow-y-auto overscroll-contain px-1.5 supports-[-moz-appearance:none]:[scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-foreground/25 [&::-webkit-scrollbar-track]:bg-transparent">
+              {options.map(([id, text]) => <Select.Item key={id} value={id} className={`flex cursor-pointer items-center justify-between gap-3 rounded-xs px-3 py-2.5 text-xs outline-none select-none data-[highlighted]:bg-foreground/10 ${font}`}><Select.ItemText>{text}</Select.ItemText><Select.ItemIndicator><Check size={14} strokeWidth={1.8} /></Select.ItemIndicator></Select.Item>)}
+            </Select.List>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Portal>
+    </Select.Root>
+  );
 }
