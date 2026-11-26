@@ -123,7 +123,7 @@ export default function Chatbot() {
           {!sidebarOpen ? (
             <div className="flex h-full w-16 flex-col items-center gap-3 pt-6">
               <button className="group relative grid size-10 place-items-center text-foreground" onClick={() => setSidebarOpen(true)} aria-label="Mở thanh bên">
-                <span className="transition-opacity group-hover:opacity-0 group-focus-visible:opacity-0"><span className="logo-f" style={{ height: 34, width: 24 }} aria-hidden="true" /></span>
+                <span className="transition-opacity group-hover:opacity-0 group-focus-visible:opacity-0"><span className="logo-f" style={{ height: 34, width: 34 }} aria-hidden="true" /></span>
                 <PanelLeftOpen size={20} strokeWidth={1.5} className="absolute opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
               </button>
               <button className="p-2 text-foreground/70 transition-colors hover:text-foreground" onClick={newChat} aria-label="Cuộc trò chuyện mới"><Plus size={18} strokeWidth={1.4} /></button>
@@ -131,7 +131,7 @@ export default function Chatbot() {
           ) : (
             <div className="flex h-full w-[272px] flex-col">
               <div className="flex items-center justify-between px-5 pt-6">
-                <Link href="/" aria-label="Finsight — Trang chủ"><Brand height={38} /></Link>
+                <Link href="/" aria-label="Finsight — Trang chủ"><Brand height={34} /></Link>
                 <div className="flex items-center gap-3">
                   <Link className="text-xs text-foreground/70 hover:text-foreground" href="/tin-tuc/">Tin tức</Link>
                   <button className="p-1.5 text-foreground/70 transition-colors hover:text-foreground" onClick={() => { setSidebarOpen(false); setMenu(null); }} aria-label="Đóng thanh bên"><PanelLeftClose size={18} strokeWidth={1.5} /></button>

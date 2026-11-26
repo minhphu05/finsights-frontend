@@ -26,7 +26,7 @@ export default function Home() {
         <div data-hero-screen className="flex min-h-dvh flex-col bg-ink">
         <section className="relative flex flex-1 items-center overflow-hidden bg-ink text-primary" aria-labelledby="fin-title">
           <video data-hero-image className="absolute inset-y-0 right-0 h-full w-[70%] object-cover object-[50%_53%] saturate-[0.85] max-[850px]:w-full max-[850px]:object-[65%_center] max-[850px]:opacity-65 max-[560px]:object-[61%_center]" src="/videos/finsight-hero.mp4" autoPlay muted loop playsInline preload="auto" aria-hidden="true" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,#0b0b0b_0%,#111_25%,#111e_37%,#1115_60%,#0001_100%)] max-[850px]:bg-[linear-gradient(90deg,#111f,#111a_55%,#1113)] max-[560px]:bg-[linear-gradient(90deg,#111e,#1117),linear-gradient(0deg,#111_0%,transparent_65%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--color-ink)_0%,var(--color-ink)_30%,color-mix(in_srgb,var(--color-ink)_80%,transparent)_42%,transparent_70%)] max-[850px]:bg-none max-[850px]:bg-ink/75" />
           <div data-hero-copy className={`${ui.wrap} relative pt-[120px] pb-16 max-[560px]:pt-[110px] max-[560px]:pb-12`}>
             <p data-hero-intro className={`${ui.eyebrow} mb-[23px] text-primary/80 max-[560px]:mb-[25px] max-[560px]:text-[9px] max-[560px]:tracking-[0.19em]`}>FINANCE × INSIGHT × INTELLIGENCE</p>
             <h1 id="fin-title" className="max-w-[760px] font-editorial text-[clamp(38px,3.55vw,60px)] leading-[1.15] font-normal tracking-[-0.035em] [text-wrap:initial] max-[850px]:text-[46px] max-[560px]:text-[clamp(32px,8vw,42px)] max-[560px]:leading-[1.25]">
@@ -44,9 +44,9 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="flex h-14 shrink-0 items-stretch border-y border-solid border-primary/30 bg-neutral-900 text-primary" aria-label="Chỉ số thị trường">
-          <div className="relative z-10 flex w-[220px] shrink-0 flex-col justify-center border-r border-solid border-primary/30 bg-neutral-900 pl-8 text-xs leading-[1.4] max-[560px]:w-[136px] max-[560px]:pl-4 max-[560px]:text-[10px]">
-            Thị trường hôm nay <small className="mt-1 text-[9px] text-primary/70">{(indices[0]?.quoteAt || stocks[0]?.quoteAt) ? new Date(indices[0]?.quoteAt || stocks[0]?.quoteAt || 0).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : loading ? 'Đang tải dữ liệu' : 'Chưa cập nhật'}</small>
+        <div className="flex h-14 shrink-0 items-stretch border-y border-solid border-primary/15 bg-background text-foreground" aria-label="Chỉ số thị trường">
+          <div className="relative z-10 flex w-[220px] shrink-0 flex-col justify-center border-r border-solid border-primary/15 bg-background pl-8 text-xs leading-[1.4] max-[560px]:w-[136px] max-[560px]:pl-4 max-[560px]:text-[10px]">
+            Thị trường hôm nay <small className="mt-1 text-[9px] text-foreground/70">{(indices[0]?.quoteAt || stocks[0]?.quoteAt) ? new Date(indices[0]?.quoteAt || stocks[0]?.quoteAt || 0).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : loading ? 'Đang tải dữ liệu' : 'Chưa cập nhật'}</small>
           </div>
           <div className="group min-w-0 flex-1 overflow-hidden motion-reduce:overflow-x-auto">
             <div data-market-loop className="flex w-max animate-market-loop group-hover:[animation-play-state:paused] group-focus-within:[animation-play-state:paused] motion-reduce:animate-none">
@@ -54,11 +54,11 @@ export default function Home() {
                 <div key={copy} aria-hidden={copy === 1 ? true : undefined} className={`flex h-14 min-w-[max(1100px,calc(100vw-220px))] shrink-0 items-center justify-around gap-12 px-6 ${copy === 1 ? 'motion-reduce:hidden' : ''}`}>
                   {loading && !indices.length && !stocks.length ? Array.from({ length: 6 }, (_, item) => <Skeleton key={item} className="h-3 w-32 shrink-0" />) : indices.length ? indices.map((item) => (
                     <a href="#thi-truong" tabIndex={copy === 1 ? -1 : undefined} key={item.symbol} className="flex shrink-0 items-center justify-center gap-3.5 text-[11px] whitespace-nowrap tabular-nums">
-                      <strong className="font-medium">{item.name}</strong><span>{number(item.value, 2)}</span><span className={item.percent < 0 ? 'text-red-300' : 'text-green-300'}>{signed(item.percent)}%</span>
+                      <strong className="font-medium">{item.name}</strong><span>{number(item.value, 2)}</span><span className={item.percent < 0 ? 'text-red-800 dark:text-red-300' : 'text-green-800 dark:text-green-300'}>{signed(item.percent)}%</span>
                     </a>
                   )) : stocks.slice(0, 6).map((stock) => (
                     <a href="#thi-truong" tabIndex={copy === 1 ? -1 : undefined} key={stock.symbol} className="flex shrink-0 items-center justify-center gap-3.5 text-[11px] whitespace-nowrap tabular-nums">
-                      <strong className="font-medium">{stock.symbol}</strong><span>{number(stock.price)}</span><span className={stock.change < 0 ? 'text-red-300' : 'text-green-300'}>{signed(stock.change)}%</span>
+                      <strong className="font-medium">{stock.symbol}</strong><span>{number(stock.price)}</span><span className={stock.change < 0 ? 'text-red-800 dark:text-red-300' : 'text-green-800 dark:text-green-300'}>{signed(stock.change)}%</span>
                     </a>
                   ))}
                 </div>
@@ -74,13 +74,13 @@ export default function Home() {
               <h2 id="fin-news-title" data-split className="font-editorial text-[clamp(32px,3.2vw,52px)] leading-[1.15] font-normal tracking-[-0.04em] max-[850px]:text-4xl">Latest News</h2>
               <Link href="/tin-tuc/" className="mt-auto flex items-center gap-3.5 text-[13px] max-[850px]:ml-auto max-[560px]:mt-[5px] max-[560px]:ml-0 max-[560px]:text-xs">Xem tất cả tin tức <LineIcon /></Link>
             </div>
-            {lead ? <Link data-landing-reveal="image" href={`/tin-tuc/${lead.slug}/`} className={`group relative overflow-hidden text-primary ${newsLead}`}>
-              {lead.image ? <img className="absolute h-full w-full object-cover saturate-[0.85] transition-transform duration-400 group-hover:scale-[1.025]! motion-reduce:transition-none" src={lead.image} alt="" /> : <div className="absolute inset-0 bg-gradient-to-br from-emerald-950 via-neutral-800 to-neutral-950" />}
+            {lead ? <Link data-landing-reveal="image" href={`/tin-tuc/${lead.slug}/`} className={`group relative overflow-hidden text-white ${newsLead}`}>
+              {lead.image ? <img className="absolute h-full w-full object-cover saturate-[0.85] transition-transform duration-400 group-hover:scale-[1.025]! motion-reduce:transition-none" src={lead.image} alt="" /> : <div className="absolute inset-0 bg-gradient-to-br from-orange-900 via-stone-800 to-stone-950" />}
               <div className="absolute inset-0 bg-[linear-gradient(transparent_15%,#000d)]" />
               <div className="absolute right-[25px] bottom-5 left-[25px]">
                 <span className="mb-[30px] block truncate text-[10px] uppercase max-[560px]:mb-3">{lead.category}</span>
                 <h3 className="line-clamp-3 font-editorial text-[clamp(23px,2vw,34px)] leading-[1.2] font-normal text-pretty max-[560px]:text-[22px]">{lead.title}</h3>
-                <p className="mt-4 truncate text-[11px] text-primary/80">{lead.time} <span className="mx-2">·</span> {lead.sourceName}</p>
+                <p className="mt-4 truncate text-[11px] text-white/80">{lead.time} <span className="mx-2">·</span> {lead.sourceName}</p>
               </div>
             </Link> : loading ? <SkeletonGroup label="Đang tải tin tức…" className={`flex ${newsLead}`}><Skeleton className="w-full" /></SkeletonGroup> : <div className={`grid place-items-center border border-primary/20 p-8 text-sm text-primary/75 ${newsLead}`}>{dataError || 'Chưa có tin mới.'}</div>}
             <div className={newsStack}>

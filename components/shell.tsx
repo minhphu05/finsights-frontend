@@ -150,18 +150,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
   return <WatchContext.Provider value={{ watch, toggle, ready, stocks: stocksData, indices: indicesData, articles: articlesData, loading, dataError, userEmail, signOut }}>{children}</WatchContext.Provider>;
 }
-// Logo Finsight: chữ F kem #EDE3D1 trên ô nền tối, nên nổi rõ ở cả giao diện sáng lẫn tối.
+// Logo Finsights: cáo cam trên ô nền cam nhạt.
 export function LogoImg({ size = 30 }: { size?: number }) {
-  const mark = Math.round(size * 0.62);
+  const mark = Math.round(size * 0.78);
   return (
     <span className="logo-tile" style={{ width: size, height: size }} aria-hidden="true">
-      <span className="logo-f" style={{ height: mark, width: Math.round(mark * 0.7) }} />
+      <span className="logo-f" style={{ height: mark, width: mark }} />
     </span>
   );
 }
-// Logo đầy đủ: chữ F và chữ "insights" (vẽ tay bằng SVG), không nền, lấy màu chữ hiện tại.
+// Logo đầy đủ: cáo và chữ "Finsights".
 export function Brand({ height = 40 }: { height?: number }) {
-  return <span className="logo-plain" style={{ height, width: Math.round((height * 50.6) / 38) }} aria-hidden="true" />;
+  return <span className="logo-plain" style={{ height, width: Math.round((height * 1200) / 321) }} aria-hidden="true" />;
 }
 // Thanh biểu tượng bên trái: chuông, cài đặt và giao diện sáng chưa có tính năng nên chỉ hiển thị "Sắp có".
 function SideRail({ pathname }: { pathname: string }) {
@@ -193,7 +193,7 @@ function SideRail({ pathname }: { pathname: string }) {
     pathname === '/' && (href === '/' ? section === '' : href === `/#${section}`);
   return (
     <aside className="side-rail" aria-label="Lối tắt">
-      <Link href="/" className="rail-logo" aria-label="Turtock — Trang chủ">
+      <Link href="/" className="rail-logo" aria-label="Finsights — Trang chủ">
         <LogoImg size={34} />
       </Link>
       <nav>
@@ -298,7 +298,7 @@ export function Header() {
       </svg>
       <header className="site-header">
         <div className="header-inner max-[520px]:gap-3 max-[520px]:[&_.brand-name]:hidden max-[520px]:[&_.main-nav]:ml-0 max-[520px]:[&_.main-nav]:gap-3 max-[520px]:[&_.header-actions]:gap-0 max-[520px]:[&_.header-search]:w-10 max-[520px]:[&_.header-search]:min-w-0">
-          <Link href="/" aria-label="Turtock — Trang chủ">
+          <Link href="/" aria-label="Finsights — Trang chủ">
             <Brand />
           </Link>
           <nav className="main-nav" aria-label="Chính" ref={nav}>
@@ -437,7 +437,7 @@ export function Footer() {
     <footer className="site-footer">
       <div className="container">
         <div className="footer-main">
-          <Link href="/" aria-label="Turtock">
+          <Link href="/" aria-label="Finsights">
             <Brand />
           </Link>
           <p>Dữ liệu có nguồn, thời điểm và doanh nghiệp liên quan.</p>
@@ -446,7 +446,7 @@ export function Footer() {
           </Link>
         </div>
         <div className="footer-bottom">
-          <span>© 2026 Turtock</span>
+          <span>© 2026 Finsights</span>
           <span>Dữ liệu được thu thập từ các nguồn được ghi rõ trong từng trang.</span>
           <span className="footer-made">
             Được làm để bạn hiểu hơn <ArrowRight size={13} />

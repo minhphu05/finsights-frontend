@@ -31,7 +31,7 @@ function SearchField({ query, setQuery }: { query: string; setQuery: (value: str
   return <label className={searchBox}><Search size={18} strokeWidth={1.4} className="shrink-0" /><input className="w-full min-w-0 border-0 bg-transparent text-xs outline-none placeholder:text-foreground/60" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm trong tin tức…" aria-label="Tìm trong tin tức" />{query && <button className="p-1" onClick={() => setQuery('')} aria-label="Xóa tìm tin"><X size={14} /></button>}</label>;
 }
 function ArticleImage({ src, className = '' }: { src: string; className?: string }) {
-  return src ? <img className={className} src={src} alt="" loading="lazy" /> : <div aria-hidden="true" className={`${className} bg-gradient-to-br from-emerald-950 via-neutral-800 to-neutral-950`} />;
+  return src ? <img className={className} src={src} alt="" loading="lazy" /> : <div aria-hidden="true" className={`${className} bg-gradient-to-br from-orange-900 via-stone-800 to-stone-950`} />;
 }
 
 /** Topic filter whose underline slides to the chosen tab. */

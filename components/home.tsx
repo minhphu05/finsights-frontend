@@ -98,7 +98,7 @@ export function HomeHeader() {
   );
 
   return (
-    <header data-home-header data-hidden={hidden} onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }} className={`fixed inset-x-0 top-0 z-40 bg-ink font-sans text-primary will-change-[translate] transition-[translate,background-color,box-shadow] selection:bg-primary selection:text-ink [&_:focus-visible]:outline-primary motion-reduce:transition-none ${pastHero ? 'shadow-lg shadow-black/10' : ''} ${hidden ? '-translate-y-full !shadow-none pointer-events-none duration-[420ms] ease-[cubic-bezier(0.4,0,0.6,1)]' : 'translate-y-0 duration-[560ms] ease-[cubic-bezier(0.22,1,0.36,1)]'}`}>
+    <header data-home-header data-hidden={hidden} onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }} className={`fixed inset-x-0 top-0 z-40 border-b border-solid border-primary/10 bg-background font-sans text-primary will-change-[translate] transition-[translate,background-color,box-shadow] selection:bg-primary selection:text-ink [&_:focus-visible]:outline-primary motion-reduce:transition-none ${pastHero ? 'shadow-sm shadow-black/5' : ''} ${hidden ? '-translate-y-full !shadow-none pointer-events-none duration-[420ms] ease-[cubic-bezier(0.4,0,0.6,1)]' : 'translate-y-0 duration-[560ms] ease-[cubic-bezier(0.22,1,0.36,1)]'}`}>
       <div className="relative mx-auto flex h-[86px] w-[88%] max-w-[1480px] items-center justify-between gap-9 max-[1150px]:gap-5 max-[560px]:h-[76px] max-[560px]:w-[90%] max-[560px]:gap-3">
         <Link href="/" className={ui.wordmark} aria-label="Finsight — Trang chủ"><Brand height={44} /></Link>
         <NavigationMenu.Root className="max-[850px]:hidden" aria-label="Điều hướng chính">
@@ -127,13 +127,13 @@ export function HomeHeader() {
           </NavigationMenu.List>
           <NavigationMenu.Portal>
             <NavigationMenu.Positioner sideOffset={10} className="z-50">
-              <NavigationMenu.Popup className="h-(--popup-height) w-(--popup-width) overflow-hidden bg-ink font-sans text-primary shadow-xl shadow-black/25 outline-none">
+              <NavigationMenu.Popup className="h-(--popup-height) w-(--popup-width) overflow-hidden bg-background font-sans text-primary shadow-xl shadow-black/25 outline-none">
                 <NavigationMenu.Viewport />
               </NavigationMenu.Popup>
             </NavigationMenu.Positioner>
           </NavigationMenu.Portal>
         </NavigationMenu.Root>
-        <nav id="home-navigation" className={`absolute inset-x-0 top-[75px] flex-col items-start gap-6 bg-ink p-6 min-[851px]:hidden ${menu ? 'flex' : 'hidden'}`} aria-label="Điều hướng chính">
+        <nav id="home-navigation" className={`absolute inset-x-0 top-[75px] flex-col items-start gap-6 bg-background p-6 min-[851px]:hidden ${menu ? 'flex' : 'hidden'}`} aria-label="Điều hướng chính">
           {navigation.map(({ href, label }) => (
             <Link key={href} href={href} onClick={() => setMenu(false)} className="flex items-center gap-2 text-xs whitespace-nowrap hover:text-primary/75">
               {label}
@@ -152,9 +152,9 @@ export function HomeHeader() {
           </button>
         </div>
         {search && (
-          <section id="home-search" className="absolute top-[78px] right-0 w-full max-w-[460px] bg-ink p-6 text-primary shadow-xl shadow-black/25">
+          <section id="home-search" className="absolute top-[78px] right-0 w-full max-w-[460px] bg-background p-6 text-primary shadow-xl shadow-black/25">
             <label className="mb-3 block" htmlFor="fin-query">Tìm kiếm tin tức</label>
-            <input className="w-full border border-solid border-primary/50 bg-ink p-3 placeholder:text-primary/60" id="fin-query" autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder="Tên doanh nghiệp, chủ đề…" onKeyDown={e => { if (e.key === 'Escape') setSearch(false); }} />
+            <input className="w-full border border-solid border-primary/50 bg-background p-3 placeholder:text-primary/60" id="fin-query" autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder="Tên doanh nghiệp, chủ đề…" onKeyDown={e => { if (e.key === 'Escape') setSearch(false); }} />
             <div>
               {matches.map(article => <Link className="flex items-center justify-between gap-5 border-b border-solid border-primary/25 py-3.5 text-[13px] hover:text-primary/75" key={article.slug} href={`/tin-tuc/${article.slug}/`}>{article.title}<LineIcon /></Link>)}
             </div>
@@ -178,7 +178,7 @@ export function AssistantButton({ floating = false }: { floating?: boolean }) {
   return (
     <>
       <button className={floating
-        ? 'fixed right-7 bottom-7 z-35 grid size-14 place-items-center rounded-xs border border-solid border-primary/50 bg-ink text-primary shadow-lg shadow-black/20 hover:bg-neutral-800 max-[560px]:right-[18px] max-[560px]:bottom-[18px] max-[560px]:size-[50px]'
+        ? 'fixed right-7 bottom-7 z-35 grid size-14 place-items-center rounded-xs border border-solid border-accent bg-accent text-white shadow-lg shadow-black/10 hover:bg-accent/90 max-[560px]:right-[18px] max-[560px]:bottom-[18px] max-[560px]:size-[50px]'
         : `${ui.button} ${ui.outlineButton}`}
         aria-label="Trò chuyện với AI" onClick={() => dialog.current?.showModal()}>
         {!floating && 'Trò chuyện với AI'}

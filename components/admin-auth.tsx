@@ -50,7 +50,7 @@ export default function AdminAuthGate({ children }: { children: React.ReactNode 
   }, [admin, router]);
 
   if (checking || !value) {
-    return <main className="grid min-h-screen place-items-center bg-[#f5f3ed] px-5 text-[#22221e]"><div className="rounded-2xl border border-[#e9e4da] bg-white px-8 py-7 text-center shadow-sm"><span className="mx-auto grid size-10 place-items-center rounded-xl bg-[#f4ecdb] text-[#9b773d]">F</span><p className="mt-4 text-sm font-semibold">Đang xác thực phiên quản trị</p><p className="mt-1 text-xs text-[#817e75]">Trang admin chỉ dành cho tài khoản quản trị.</p></div></main>;
+    return <main className="grid min-h-screen place-items-center bg-[#fff8f3] px-5 text-[#2e1c13]"><div className="rounded-2xl border border-[#f6e0d2] bg-white px-8 py-7 text-center shadow-sm"><span className="mx-auto grid size-10 place-items-center rounded-xl bg-[#fff1e6] text-[#c2410c]">F</span><p className="mt-4 text-sm font-semibold">Đang xác thực phiên quản trị</p><p className="mt-1 text-xs text-[#836e63]">Trang admin chỉ dành cho tài khoản quản trị.</p></div></main>;
   }
   return <AdminSessionContext.Provider value={value}>{children}</AdminSessionContext.Provider>;
 }

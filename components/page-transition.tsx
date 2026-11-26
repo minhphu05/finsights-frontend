@@ -7,7 +7,7 @@ const EASE = 'cubic-bezier(0.76, 0, 0.24, 1)';
 const SKEW = 'skewX(-10deg)';
 const slide = (x: string) => `translateX(${x}) ${SKEW}`;
 
-/** Cinematic wipe between routes: an ink curtain sweeps over the page, holds the mark, then sweeps away on the new route. */
+/** Cinematic wipe between routes: a soft curtain sweeps over the page, holds the mark, then sweeps away on the new route. */
 export default function PageTransition() {
   const router = useRouter();
   const pathname = usePathname();
@@ -63,12 +63,12 @@ export default function PageTransition() {
 
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 1000, pointerEvents: 'none', overflow: 'hidden' }}>
-      <div ref={panel} style={{ position: 'absolute', top: 0, left: 0, width: '130vw', height: '100%', background: '#0b0b0b', transform: slide('100vw'), visibility: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 5, background: '#eadfce' }} />
+      <div ref={panel} style={{ position: 'absolute', top: 0, left: 0, width: '130vw', height: '100%', background: 'var(--color-ink)', transform: slide('100vw'), visibility: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 5, background: 'var(--color-logo)' }} />
       </div>
       <div ref={mark} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', opacity: 0 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/finsight-lockup-cream.svg" alt="" style={{ height: 84, width: 'auto' }} />
+        <img src="/finsights-lockup.png" alt="" style={{ width: 260, height: 'auto' }} />
       </div>
     </div>
   );
