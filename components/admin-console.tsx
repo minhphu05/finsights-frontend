@@ -99,7 +99,7 @@ export default function AdminConsole() {
           </div>
         </aside>
 
-        <main className="min-h-0 min-w-0 overflow-y-auto" data-lenis-prevent>
+        <main className="min-h-0 min-w-0 overflow-y-auto supports-[-moz-appearance:none]:[scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-foreground/25 [&::-webkit-scrollbar-thumb:hover]:bg-foreground/40 [&::-webkit-scrollbar-track]:bg-transparent" data-lenis-prevent>
           {/* A tab mounts on first visit (the key tab calls paid health checks) and then stays, so filters and uploads survive switching. */}
           {TABS.filter(({ id }) => visited.includes(id)).map(({ id, view: View }) => <div key={id} hidden={tab !== id} className="mx-auto w-full max-w-[1320px] px-5 py-8 sm:px-8"><View /></div>)}
         </main>
