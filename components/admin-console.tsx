@@ -72,7 +72,7 @@ export default function AdminConsole() {
               </div>
             ) : (
               <button type="button" className={`${iconButton} group relative mt-6`} onClick={() => setSidebarOpen(true)} aria-label="Mở thanh bên">
-                <span className="transition-opacity group-hover:opacity-0 group-focus-visible:opacity-0"><span className="logo-f" style={{ height: 34, width: 24 }} aria-hidden="true" /></span>
+                <span className="transition-opacity group-hover:opacity-0 group-focus-visible:opacity-0"><span className="logo-f" style={{ height: 34, width: 34 }} aria-hidden="true" /></span>
                 <PanelLeftOpen size={20} strokeWidth={1.5} className="absolute opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
               </button>
             )}

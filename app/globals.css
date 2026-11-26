@@ -7,11 +7,13 @@
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
   }
-  --color-primary: #eadfce;
-  --color-background: #faf9f6;
-  --color-ink: #111111;
-  --color-foreground: #111111;
-  --color-market-accent: #82613e;
+  --color-primary: #3d2418;
+  --color-background: #fffcfa;
+  --color-ink: #fff1e6;
+  --color-foreground: #2e1c13;
+  --color-market-accent: #c2410c;
+  --color-accent: #d9430a;
+  --color-logo: #ff4a00;
   --font-sans: 'Lexend', sans-serif;
   --font-editorial: 'Lexend', sans-serif;
 }
@@ -19,28 +21,28 @@
 /* Legacy dashboard/news styles stay scoped below Tailwind utilities. */
 @layer components {
 :root {
-  --bg: #0e1e1d;
-  --surface: #23362e;
-  --surface-2: #2b4037;
-  --surface-3: #344a3f;
-  --stage: #1f3029;
-  --line: #385044;
-  --line-strong: #4a6352;
-  --text: #f1efe0;
-  --muted: #bec4a9;
-  --faint: #9ea78f;
-  --prose: #e0e0cf;
-  --brand: #5b7a3c;
-  --brand-deep: #4a6532;
-  --brand-ink: #b5c271;
-  --cream: #f3e3bd;
-  --ceil: #b48be0;
-  --up: #74c650;
-  --ref: #e0b04a;
-  --down: #f47c62;
-  --floor: #66bfe8;
-  --on-data: #0f1a14;
-  --chart-grid: #385044;
+  --bg: var(--color-background);
+  --surface: color-mix(in srgb, var(--color-foreground) 4%, var(--color-background));
+  --surface-2: color-mix(in srgb, var(--color-foreground) 7%, var(--color-background));
+  --surface-3: color-mix(in srgb, var(--color-foreground) 11%, var(--color-background));
+  --stage: color-mix(in srgb, var(--color-foreground) 3%, var(--color-background));
+  --line: color-mix(in srgb, var(--color-foreground) 14%, var(--color-background));
+  --line-strong: color-mix(in srgb, var(--color-foreground) 28%, var(--color-background));
+  --text: var(--color-foreground);
+  --muted: color-mix(in srgb, var(--color-foreground) 68%, var(--color-background));
+  --faint: color-mix(in srgb, var(--color-foreground) 52%, var(--color-background));
+  --prose: color-mix(in srgb, var(--color-foreground) 92%, var(--color-background));
+  --brand: var(--color-market-accent);
+  --brand-deep: var(--color-market-accent);
+  --brand-ink: var(--color-market-accent);
+  --cream: var(--color-market-accent);
+  --ceil: #7e3fb0;
+  --up: #067647;
+  --ref: #a16207;
+  --down: #b42318;
+  --floor: #0b6e99;
+  --on-data: var(--color-background);
+  --chart-grid: var(--line);
   --sand: #ece2c3;
   --sand-fill: #f5eed8;
   --sand-edge: #cdb985;
@@ -71,7 +73,7 @@
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --font: 'Lexend', system-ui, sans-serif;
   --font-display: 'Lexend', system-ui, sans-serif;
-  color-scheme: dark;
+  color-scheme: light;
 }
 * {
   box-sizing: border-box;
@@ -2742,24 +2744,22 @@ main:has(> .sand-band:last-child) + .site-footer {
   flex: none;
   place-items: center;
   border-radius: 28%;
-  background: #0f0d0c;
-  box-shadow: inset 0 0 0 1px rgba(237, 227, 209, 0.18);
-  color: #ede3d1;
+  background: var(--color-ink);
 }
 /* Chữ F của Finsight bản tô đặc (bản viền quá mảnh ở cỡ nhỏ), đổi màu theo currentColor. */
 .logo-f {
   display: block;
   flex: none;
-  background: currentColor;
-  -webkit-mask: url('/finsight-mark-solid.svg') center/contain no-repeat;
-  mask: url('/finsight-mark-solid.svg') center/contain no-repeat;
+  background: var(--color-logo);
+  -webkit-mask: url('/finsights-mark.png') center/contain no-repeat;
+  mask: url('/finsights-mark.png') center/contain no-repeat;
 }
 .logo-plain {
   display: block;
   flex: none;
-  background: currentColor;
-  -webkit-mask: url('/finsight-lockup-plain.svg') center/contain no-repeat;
-  mask: url('/finsight-lockup-plain.svg') center/contain no-repeat;
+  background: var(--color-logo);
+  -webkit-mask: url('/finsights-lockup.png') center/contain no-repeat;
+  mask: url('/finsights-lockup.png') center/contain no-repeat;
 }
 .brand-mark {
   display: grid;
@@ -4084,9 +4084,17 @@ h1,h2,h3,.brand-name{font-family:var(--font-display)}
 
 @layer base {
   html[data-theme='dark'] {
-    --color-background: #191817;
-    --color-market-accent: #d3b18a;
-    --color-foreground: #eadfce;
+    --color-primary: #ffeadd;
+    --color-background: #1c1410;
+    --color-ink: #140e0b;
+    --color-foreground: #ffeadd;
+    --color-market-accent: #ff8a57;
+    --up: #4ade80;
+    --ref: #e0b04a;
+    --down: #f47c62;
+    --ceil: #b48be0;
+    --floor: #66bfe8;
+    color-scheme: dark;
   }
   html:has([data-home]) { color-scheme: light; }
   html[data-theme='dark']:has([data-home]) { color-scheme: dark; }
@@ -4126,7 +4134,7 @@ h1,h2,h3,.brand-name{font-family:var(--font-display)}
     padding-left: 0;
   }
   body:has([data-article-page]) [data-home-header] {
-    background-color: var(--color-ink);
+    background-color: var(--color-background);
     color: var(--color-primary);
   }
   @media (max-width: 640px) {
@@ -4147,4 +4155,10 @@ button:not(:disabled):hover svg:is(.lucide-arrow-right, .lucide-arrow-up-right):
   svg:is(.lucide-arrow-right, .lucide-arrow-up-right) {
     transition: none !important;
   }
+}
+
+/* Light theme: flip the dark hero footage to a pale one. !important beats the inline filter from the scroll animation. */
+html:not([data-theme='dark']) video[data-hero-image] {
+  filter: invert(1) hue-rotate(180deg) saturate(0.85) !important;
+  mix-blend-mode: multiply;
 }

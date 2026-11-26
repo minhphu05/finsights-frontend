@@ -6,19 +6,16 @@ import { usePathname } from 'next/navigation';
 const EASE = 'cubic-bezier(0.76, 0, 0.24, 1)';
 const SKEW = 'skewX(-10deg)';
 const slide = (x: string) => `translateX(${x}) ${SKEW}`;
-const MIN_MS = 1900;
 const MAX_MS = 7000;
 const SEEN = 'finsight-intro-seen';
 
-/** Intro on the first visit of a session: a rising chart line draws itself while fonts and the hero video load, then the curtain wipes into the page. */
+/** Intro on the first visit of a session: the 4s logo clip plays while fonts and the hero video load, then the curtain wipes into the page. */
 export default function Preloader() {
   const pathname = usePathname();
   const [gone, setGone] = useState(false);
   const curtain = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
-  const mark = useRef<HTMLImageElement>(null);
-  const line = useRef<SVGPathElement>(null);
-  const head = useRef<SVGPolygonElement>(null);
+  const clip = useRef<HTMLVideoElement>(null);
   const home = useRef(pathname === '/');
 
   useEffect(() => {
@@ -28,20 +25,24 @@ export default function Preloader() {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const root = document.documentElement;
     root.style.overflow = 'hidden';
-    mark.current?.animate([{ opacity: 0, transform: 'translateY(14px) scale(0.94)' }, { opacity: 1, transform: 'none' }], { duration: 900, delay: 150, easing: EASE, fill: 'forwards' });
 
-    let ready = false;
-    let raf = 0;
-    let shown = 0;
-    const start = performance.now();
     const waits: Promise<unknown>[] = [
       new Promise(resolve => (document.readyState === 'complete' ? resolve(null) : window.addEventListener('load', () => resolve(null), { once: true }))),
       document.fonts?.ready ?? Promise.resolve(),
     ];
     const video = home.current ? document.querySelector<HTMLVideoElement>('video[data-hero-image]') : null;
     if (video && video.readyState < 2) waits.push(new Promise(resolve => video.addEventListener('loadeddata', () => resolve(null), { once: true })));
-    Promise.all(waits).then(() => { ready = true; });
-    const limit = setTimeout(() => { ready = true; }, MAX_MS);
+    // The curtain stays until the clip has played through; a clip that cannot play must not block the page.
+    const intro = clip.current;
+    if (intro && !motion && !intro.ended && !intro.error) {
+      waits.push(new Promise(resolve => {
+        intro.addEventListener('ended', resolve, { once: true });
+        intro.addEventListener('error', resolve, { once: true });
+        // Browsers block audible autoplay until the visitor has interacted with the site, so fall back to a muted run.
+        intro.muted = false;
+        intro.play().catch(() => { intro.muted = true; intro.play().catch(resolve); });
+      }));
+    }
 
     const leave = () => {
       root.style.overflow = '';
@@ -66,42 +67,24 @@ export default function Preloader() {
       }
     };
 
-    const tick = (now: number) => {
-      const elapsed = now - start;
-      const target = ready ? 100 : Math.min(88, elapsed / 55);
-      shown += (target - shown) * 0.07;
-      if (line.current) line.current.style.strokeDashoffset = String(1 - shown / 100);
-      if (head.current) head.current.style.opacity = shown > 96 ? '1' : '0';
-      if (ready && elapsed >= MIN_MS && shown > 99) { leave(); return; }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); clearTimeout(limit); root.style.overflow = ''; };
+    let done = false;
+    const exit = () => { if (!done) { done = true; leave(); } };
+    let cancelled = false;
+    Promise.all(waits).then(() => { if (!cancelled) exit(); });
+    const limit = setTimeout(exit, MAX_MS);
+    return () => { cancelled = true; clearTimeout(limit); root.style.overflow = ''; };
   }, []);
 
   if (gone) return null;
   return (
     <div data-preloader aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 2000, overflow: 'hidden', pointerEvents: 'all' }}>
       <style>{'html[data-intro-seen] [data-preloader]{display:none!important}'}</style>
-      <div ref={curtain} style={{ position: 'absolute', top: 0, left: 0, width: '130vw', height: '100%', background: '#0b0b0b', transform: slide('-15vw') }}>
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 5, background: '#eadfce' }} />
+      <div ref={curtain} style={{ position: 'absolute', top: 0, left: 0, width: '130vw', height: '100%', background: '#fff', transform: slide('-15vw') }}>
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 5, background: 'var(--color-logo)' }} />
       </div>
-      <div ref={content} style={{ position: 'absolute', inset: 0, color: '#eadfce' }}>
-        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
-          {/* Chart line runs under the lockup and climbs its right side, so the arrow wraps the logo. */}
-          <div style={{ position: 'relative', width: 240, height: 190 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img ref={mark} src="/finsight-lockup-cream.svg" alt="" style={{ position: 'absolute', left: 60, top: 40, height: 90, width: 'auto', opacity: 0 }} />
-            <svg width="240" height="190" viewBox="0 0 240 190" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', inset: 0 }}>
-              {/* Tapered swoosh body is revealed by a stroke that draws along its centre line. */}
-              <mask id="preloader-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="240" height="190">
-                <path ref={line} pathLength={1} d="M30 140 C118 152 206 146 214 58 L214.7 50" stroke="#fff" strokeWidth="20" strokeLinecap="butt" style={{ strokeDasharray: '1 2', strokeDashoffset: 1 }} />
-              </mask>
-              <path d="M30 140 C119 157 212 150 220.5 58.6 L221.2 50.6 L208.2 49.4 L207.5 57.4 C200 142 118 148 30 140 Z" fill="currentColor" stroke="none" mask="url(#preloader-reveal)" />
-              <polygon ref={head} points="216.7,28.1 229.1,57.4 199.3,54.6" fill="currentColor" strokeWidth="1" style={{ opacity: 0, transition: 'opacity 0.3s ease' }} />
-            </svg>
-          </div>
-        </div>
+      <div ref={content} style={{ position: 'absolute', inset: 0, color: 'var(--color-logo)' }}>
+        {/* The clip has a pure white background, so it blends into the curtain when letterboxed on portrait screens. */}
+        <video ref={clip} className="absolute inset-0 h-full w-full object-contain landscape:object-cover" src="/videos/finsights-preloader.mp4" playsInline preload="auto" />
         <p style={{ position: 'absolute', left: 0, right: 0, bottom: 44, textAlign: 'center', fontSize: 10, letterSpacing: '0.3em', opacity: 0.7 }}>FINANCE × INSIGHT × INTELLIGENCE</p>
       </div>
     </div>

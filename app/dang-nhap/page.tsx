@@ -62,8 +62,8 @@ export default function SignInPage() {
     <main data-home className="grid min-h-dvh bg-background font-sans text-foreground lg:grid-cols-[1.15fr_1fr]">
       {/* The same market picture and type as the home hero. */}
       <div className="relative flex items-end overflow-hidden bg-ink text-primary max-lg:hidden">
-        <video className="absolute inset-0 h-full w-full object-cover object-[62%_50%] saturate-[0.85]" src="/videos/finsight-hero.mp4" autoPlay muted loop playsInline preload="auto" aria-hidden="true" />
-        <div className="absolute inset-0 bg-[linear-gradient(0deg,#111_0%,#111c_28%,#1112_65%,#111a_100%)]" />
+        <video className="absolute inset-0 h-full w-full object-cover object-[62%_50%] saturate-[0.85] invert hue-rotate-180 mix-blend-multiply dark:invert-0 dark:hue-rotate-0 dark:mix-blend-normal" src="/videos/finsight-hero.mp4" autoPlay muted loop playsInline preload="auto" aria-hidden="true" />
+        <div className="absolute inset-0 bg-[linear-gradient(0deg,var(--color-ink)_0%,color-mix(in_srgb,var(--color-ink)_85%,transparent)_28%,transparent_60%)]" />
         <div className="relative w-full px-[11%] pb-16">
           <p className={`${ui.eyebrow} mb-5 text-primary/80`}>FINANCE × INSIGHT × INTELLIGENCE</p>
           <p className="max-w-[560px] font-editorial text-[clamp(34px,3.3vw,54px)] leading-[1.15] font-normal tracking-[-0.035em]">Hiểu bối cảnh.<span className="block">Thấy rõ chuyển động.</span></p>
