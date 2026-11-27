@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description:
     'Theo dõi dữ liệu thị trường Việt Nam, tin doanh nghiệp và báo cáo tài chính có nguồn dẫn.',
 };
-export const viewport: Viewport = { themeColor: '#fff1e6', colorScheme: 'light' };
+export const viewport: Viewport = { themeColor: '#fff8f3', colorScheme: 'light' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

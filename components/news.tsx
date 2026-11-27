@@ -11,6 +11,7 @@ import { LineIcon } from './home';
 import { useAppData } from './shell';
 import StockSelect from './stock-select';
 import { ArticleRowsSkeleton, NewsFeedSkeleton } from './skeleton';
+import { HomeFooter } from './home-footer';
 
 // API trả category dạng slug; chỉ các slug này là chủ đề thật. sitemap / sitemap_archive là nhãn nguồn crawl nên hiển thị chung là "Tin tức".
 const CATEGORY_LABELS: Record<string, string> = { stock_market: 'Thị trường', business_finance: 'Doanh nghiệp', macro_economy: 'Vĩ mô', banking: 'Ngân hàng' };
@@ -239,7 +240,7 @@ export default function News() {
           </section>
         </> : stale || busy ? <NewsFeedSkeleton /> : <section className="relative z-10 bg-background text-foreground"><div className={`${ui.wrap} flex flex-col items-start gap-5 py-16 md:py-24`}><Search size={34} strokeWidth={1.2} /><h2 className={ui.sectionTitle}>{error || dataError ? 'Không tải được tin tức.' : 'Chưa có tin phù hợp.'}</h2><p role={error || dataError ? 'alert' : undefined} className="text-[13px] text-foreground/65">{error || (appLoading ? 'Đang tải tin tức từ API…' : dataError || 'Thử mã khác hoặc xem lại bộ lọc.')}</p><button className={`${ui.button} ${ui.primaryButton} mt-3`} onClick={clear}>Xem tất cả tin tức <LineIcon /></button></div></section>}
       </main>
-      <footer className={`${ui.wrap} flex items-center gap-[35px] border-t border-solid border-primary/30 py-[30px] text-[11px] text-primary/80 max-[850px]:flex-wrap max-[560px]:gap-[18px]`}><Link className="mr-auto font-editorial text-2xl leading-none tracking-[0.08em] text-primary" href="/">FINSIGHT</Link><span>© 2026 Finsight</span><p className="max-[850px]:w-full">Tin tức có nguồn, ngày xuất bản và mã cổ phiếu liên quan.</p></footer>
+      <HomeFooter note="Tin tức có nguồn, ngày xuất bản và mã cổ phiếu liên quan." />
     </div>
   );
 }

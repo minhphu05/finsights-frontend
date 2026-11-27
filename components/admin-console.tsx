@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Bot, KeyRound, LogOut, PanelLeftClose, PanelLeftOpen, ScrollText, SearchCheck, ShieldCheck } from 'lucide-react';
+import { KeyRound, LogOut, PanelLeftClose, PanelLeftOpen, ScrollText, SearchCheck, ShieldCheck } from 'lucide-react';
 import { useAdminSession } from '@/components/admin-auth';
 import AdminManagementDialog from '@/components/admin-management-dialog';
 import { Brand } from '@/components/shell';
@@ -11,10 +11,15 @@ import ApiKeys from '@/components/admin/api-keys';
 import RetrievalBenchmark from '@/components/admin/retrieval-benchmark';
 import TraceLogs from '@/components/admin/trace-logs';
 
+// The fox head drawn as a mask, so it takes the tab's text colour like the other icons.
+function FoxIcon({ size = 16 }: { size?: number; strokeWidth?: number }) {
+  return <span aria-hidden="true" className="inline-block shrink-0 bg-current [mask:url(/finsights-fox-head.svg)_center/contain_no-repeat]" style={{ width: size, height: size }} />;
+}
+
 const TABS = [
   { id: 'trace', label: 'Trace log', icon: ScrollText, view: TraceLogs },
   { id: 'retrieval', label: 'Benchmark truy xuất', icon: SearchCheck, view: RetrievalBenchmark },
-  { id: 'agent', label: 'Benchmark agent', icon: Bot, view: AgentBenchmark },
+  { id: 'agent', label: 'Benchmark agent', icon: FoxIcon, view: AgentBenchmark },
   { id: 'keys', label: 'API key', icon: KeyRound, view: ApiKeys },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
@@ -48,7 +53,7 @@ export default function AdminConsole() {
   const iconButton = 'grid size-10 shrink-0 place-items-center rounded-xs text-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground';
 
   return (
-    <div data-home className="h-dvh overflow-hidden bg-background font-sans text-foreground selection:bg-foreground selection:text-background [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-1 [&_:focus-visible]:outline-foreground motion-reduce:[&_*]:transition-none">
+    <div data-home data-admin className="h-dvh overflow-hidden bg-background font-sans text-foreground selection:bg-foreground selection:text-background [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-1 [&_:focus-visible]:outline-foreground motion-reduce:[&_*]:transition-none">
       <div className={`grid h-full grid-cols-1 grid-rows-[auto_minmax(0,1fr)] transition-[grid-template-columns] duration-200 lg:grid-rows-1 ${sidebarOpen ? 'lg:grid-cols-[272px_minmax(0,1fr)]' : 'lg:grid-cols-[64px_minmax(0,1fr)]'}`}>
         <div className="min-w-0 border-b border-foreground/20 lg:hidden">
           <div className="flex items-center justify-between px-5 py-3">

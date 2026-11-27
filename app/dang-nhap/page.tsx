@@ -4,13 +4,10 @@ import Script from 'next/script';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check } from '@/components/icons';
-import { homeStyles as ui } from '@/components/home-styles';
+import { ArrowLeft } from '@/components/icons';
 import { API_UNAVAILABLE_MESSAGE, GOOGLE_CLIENT_ID } from '@/lib/api';
 import { signInWithGoogle } from '@/lib/auth-actions';
-import { useAppData } from '@/components/shell';
-
-const perks = ['Lưu danh sách cổ phiếu theo dõi', 'Đồng bộ giữa các thiết bị', 'Hỏi trợ lý AI về thị trường'];
+import { Brand, useAppData } from '@/components/shell';
 
 declare global {
   interface Window {
@@ -55,39 +52,28 @@ export default function SignInPage() {
       },
       auto_select: false,
     });
-    window.google.accounts.id.renderButton(button.current, { theme: 'outline', size: 'large', shape: 'rectangular', text: 'signin_with', width: Math.min(320, button.current.clientWidth || 320), locale: 'vi' });
+    window.google.accounts.id.renderButton(button.current, { theme: 'outline', size: 'large', shape: 'rectangular', text: 'continue_with', logo_alignment: 'center', width: Math.min(400, button.current.clientWidth || 400), locale: 'vi' });
   }, [router]);
   useEffect(() => { if (userEmail) router.replace('/'); }, [userEmail, router]);
   return (
-    <main data-home className="grid min-h-dvh bg-background font-sans text-foreground lg:grid-cols-[1.15fr_1fr]">
-      {/* The same market picture and type as the home hero. */}
-      <div className="relative flex items-end overflow-hidden bg-ink text-primary max-lg:hidden">
-        <video className="absolute inset-0 h-full w-full object-cover object-[62%_50%] saturate-[0.85] invert hue-rotate-180 mix-blend-multiply dark:invert-0 dark:hue-rotate-0 dark:mix-blend-normal" src="/videos/finsight-hero.mp4" autoPlay muted loop playsInline preload="auto" aria-hidden="true" />
-        <div className="absolute inset-0 bg-[linear-gradient(0deg,var(--color-ink)_0%,color-mix(in_srgb,var(--color-ink)_85%,transparent)_28%,transparent_60%)]" />
-        <div className="relative w-full px-[11%] pb-16">
-          <p className={`${ui.eyebrow} mb-5 text-primary/80`}>FINANCE × INSIGHT × INTELLIGENCE</p>
-          <p className="max-w-[560px] font-editorial text-[clamp(34px,3.3vw,54px)] leading-[1.15] font-normal tracking-[-0.035em]">Hiểu bối cảnh.<span className="block">Thấy rõ chuyển động.</span></p>
-        </div>
-      </div>
+    <main data-home className="flex min-h-dvh flex-col bg-background font-sans text-foreground">
+      <header className="mx-auto flex w-[93%] max-w-[1560px] items-center justify-between gap-4 border-b border-solid border-foreground/15 px-[2.5%] py-5">
+        <Link href="/" aria-label="Finsights — Trang chủ"><Brand height={48} /></Link>
+        <Link href="/" className="group flex min-h-10 items-center gap-2.5 font-['Lora',serif] text-lg font-semibold no-underline"><ArrowLeft size={20} aria-hidden="true" className="transition-transform duration-300 ease-out group-hover:-translate-x-1.5 group-focus-visible:-translate-x-1.5 motion-reduce:transition-none" />Trang chủ</Link>
+      </header>
 
-      <section className="flex min-w-0 items-center justify-center px-6 pt-[126px] pb-16 max-[560px]:pt-[108px]" aria-labelledby="signin-title">
-        <div className="w-full max-w-[420px]">
-          <p className={`${ui.eyebrow} text-foreground/65`}>TÀI KHOẢN</p>
-          <h1 id="signin-title" className="mt-4 font-editorial text-[clamp(32px,3.2vw,48px)] leading-[1.15] font-normal tracking-[-0.035em] text-foreground">Đăng nhập Finsight</h1>
-          <p className="mt-4 text-[13px] leading-7 text-foreground/65">Dùng tài khoản Google để theo dõi thị trường theo cách của bạn.</p>
-          <ul className="mt-8 list-none border-t border-solid border-foreground/20 p-0">
-            {perks.map(perk => <li key={perk} className="flex items-center gap-4 border-b border-solid border-foreground/20 py-4 text-[13px]"><Check size={16} strokeWidth={1.4} className="shrink-0" aria-hidden="true" />{perk}</li>)}
-          </ul>
-          <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onReady={initializeGoogle} />
-          {/* Hidden, not removed, while busy: Google renders into this element only once. */}
-          <div className="mt-8 min-h-11">
-            <div ref={button} className={`w-full justify-center [color-scheme:light] ${busy ? 'hidden' : 'flex'}`} />
-            {busy && <p role="status" className="py-3 text-center text-sm text-foreground/65">Đang xác thực tài khoản…</p>}
-          </div>
-          {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
-          <p className="mt-6 text-center text-xs leading-6 text-foreground/55">Finsight không nhận mật khẩu Google của bạn.</p>
-          <Link href="/" className="mx-auto mt-6 flex w-fit items-center gap-2 text-xs text-foreground/70 underline-offset-4 hover:text-foreground hover:underline"><ArrowLeft size={15} />Về trang chủ</Link>
+      <section className="flex flex-1 flex-col items-center justify-center px-6 pt-6 pb-12 text-center" aria-labelledby="signin-title">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/finsights-fox-news.webp" alt="" width={960} height={804} className="h-auto w-[min(430px,86vw,46dvh)]" />
+        <h1 id="signin-title" className="mt-8 font-['Lora',serif] text-[clamp(34px,4.6vw,66px)] leading-[1.2] font-bold tracking-[-0.02em] text-balance">Đăng nhập Finsights</h1>
+        <p className="mt-2 text-[clamp(15px,1.4vw,20px)] leading-7 text-foreground/85">Theo dõi cổ phiếu và trò chuyện với trợ lý AI.</p>
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onReady={initializeGoogle} />
+        {/* Hidden, not removed, while busy: Google renders into this element only once. */}
+        <div className="mt-8 min-h-11 w-full max-w-[400px]">
+          <div ref={button} className={`w-full justify-center [color-scheme:light] ${busy ? 'hidden' : 'flex'}`} />
+          {busy && <p role="status" className="py-3 text-sm text-foreground/65">Đang xác thực tài khoản…</p>}
         </div>
+        {error && <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-400">{error}</p>}
       </section>
     </main>
   );

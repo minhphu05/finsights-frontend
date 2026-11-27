@@ -43,15 +43,6 @@ export default function LandingMotion() {
       gsap.ticker.add(raf);
       gsap.ticker.lagSmoothing(0);
 
-      const progress = document.createElement('div');
-      progress.className = 'pointer-events-none fixed inset-x-0 top-0 z-50 h-[2px] origin-left bg-market-accent';
-      progress.setAttribute('aria-hidden', 'true');
-      // The reading progress line belongs to the home page only.
-      if (pathname === '/') {
-        document.body.append(progress);
-        gsap.fromTo(progress, { scaleX: 0 }, { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: true } });
-      }
-
       // Chapter 0 — hero: pinned while the news section slides over it like a curtain.
       // Pinning wraps the hero in a spacer, so it must wait until React has hydrated it (news pages hydrate late behind Suspense).
       const hero = document.querySelector<HTMLElement>('[data-hero-screen]');
@@ -196,9 +187,18 @@ export default function LandingMotion() {
 
       // Final chapter — night falls: the page darkens into the closing statement, then its words light up one by one.
       const story = document.querySelector<HTMLElement>('[data-scroll-story]');
+      let themeWatch: MutationObserver | null = null;
       if (story) {
-        const day = story.previousElementSibling ? getComputedStyle(story.previousElementSibling).backgroundColor : '';
-        if (day) gsap.fromTo(story, { backgroundColor: day }, { backgroundColor: getComputedStyle(story).backgroundColor, ease: 'none', scrollTrigger: { trigger: story, start: 'top bottom', end: 'top 25%', scrub: true } });
+        // GSAP bakes the resolved colours into the tween, so it is rebuilt whenever the theme flips.
+        let dusk: gsap.core.Tween | null = null;
+        const stageDusk = () => {
+          dusk?.revert();
+          const day = story.previousElementSibling ? getComputedStyle(story.previousElementSibling).backgroundColor : '';
+          if (day) dusk = gsap.fromTo(story, { backgroundColor: day }, { backgroundColor: getComputedStyle(story).backgroundColor, ease: 'none', scrollTrigger: { trigger: story, start: 'top bottom', end: 'top 25%', scrub: true } });
+        };
+        stageDusk();
+        themeWatch = new MutationObserver(() => context.add(stageDusk));
+        themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
         gsap.fromTo(story.querySelectorAll('[data-scroll-word]'), { opacity: 0.12, filter: 'blur(6px)' }, {
           opacity: 1, filter: 'blur(0px)', stagger: 0.1, ease: 'none',
           scrollTrigger: { trigger: story, start: 'top 55%', end: desktop ? 'bottom bottom' : 'center center', scrub: true },
@@ -210,12 +210,11 @@ export default function LandingMotion() {
       resize.observe(document.querySelector('[data-home] main') ?? document.body);
 
       return () => {
-        cancelAnimationFrame(heroFrame); heroWatch?.disconnect(); clearTimeout(refresh); resize.disconnect(); marketWait?.disconnect();
+        cancelAnimationFrame(heroFrame); heroWatch?.disconnect(); clearTimeout(refresh); resize.disconnect(); marketWait?.disconnect(); themeWatch?.disconnect();
         restores.forEach(restore => restore());
         gsap.ticker.remove(raf); gsap.ticker.lagSmoothing(500, 33);
         lenis?.destroy(); lenis = null;
         animations.forEach(animation => animation.cancel()); animations.clear();
-        progress.remove();
       };
     });
 

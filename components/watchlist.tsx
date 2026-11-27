@@ -7,6 +7,7 @@ import { useWatch } from './shell';
 import { homeStyles as ui } from './home-styles';
 import { LineIcon } from './home';
 import { RowsSkeleton } from './skeleton';
+import { HomeFooter } from './home-footer';
 
 const control = 'rounded-xs border border-solid border-foreground/25 bg-transparent px-3 py-2 text-xs text-foreground transition-colors hover:bg-foreground/5 motion-reduce:transition-none';
 const activeControl = 'rounded-xs border border-solid border-foreground bg-ink px-3 py-2 text-xs text-primary';
@@ -110,11 +111,7 @@ export default function Watchlist() {
           </div>
         </section>
       </main>
-      <footer className={`${ui.wrap} flex items-center gap-[35px] border-t border-solid border-primary/30 py-[30px] text-[11px] text-primary/80 max-[850px]:flex-wrap max-[560px]:gap-[18px]`}>
-        <Link className="mr-auto font-editorial text-2xl leading-none tracking-[0.08em] text-primary" href="/">FINSIGHT</Link>
-        <span>© 2026 Finsight</span>
-        <p className="max-[850px]:w-full">Dữ liệu và bài viết minh họa. Trợ lý AI đang phát triển.</p>
-      </footer>
+      <HomeFooter note="Dữ liệu và bài viết minh họa. Trợ lý AI đang phát triển." />
     </div>
   );
 }

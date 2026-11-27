@@ -279,7 +279,7 @@ export function Header() {
     if (search) input.current?.focus();
   }, [search]);
   if (pathname.startsWith('/admin')) return null;
-  if (pathname.replace(/\/$/, '') === '/chatbot') return null;
+  if (['/chatbot', '/dang-nhap'].includes(pathname.replace(/\/$/, ''))) return null;
   if (isLanding(pathname)) return <HomeHeader />;
   const matches = liveStocks
     .filter((s) =>
