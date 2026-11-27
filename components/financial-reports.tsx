@@ -9,6 +9,7 @@ import { number } from '@/lib/data';
 import { homeStyles as ui } from './home-styles';
 import { RowsSkeleton } from './skeleton';
 import { useAppData } from './shell';
+import { HomeFooter } from './home-footer';
 
 const heroInputClass = 'cursor-pointer rounded-xs border border-solid border-primary/30 bg-transparent px-3 py-2.5 text-xs text-primary transition-colors hover:border-primary/60 [&>option]:bg-ink';
 const inputClass = 'rounded-xs border border-solid border-foreground/25 bg-background px-3 py-2.5 text-xs text-foreground';
@@ -93,7 +94,7 @@ export default function FinancialReports() {
           </div>
         </section>
       </main>
-      <footer className={`${ui.wrap} flex items-center gap-[35px] border-t border-solid border-primary/30 py-[30px] text-[11px] text-primary/80 max-[850px]:flex-wrap max-[560px]:gap-[18px]`}><Link className="mr-auto font-editorial text-2xl leading-none tracking-[0.08em] text-primary" href="/">FINSIGHT</Link><span>© 2026 Finsight</span><p className="max-[850px]:w-full">Tài liệu và số liệu được trình bày theo dữ liệu nguồn.</p></footer>
+      <HomeFooter note="Tài liệu và số liệu được trình bày theo dữ liệu nguồn." />
     </div>
   );
 }

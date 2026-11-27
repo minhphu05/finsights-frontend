@@ -8,6 +8,7 @@ import { homeStyles as ui } from '@/components/home-styles';
 import { number, signed } from '@/lib/data';
 import { useAppData } from '@/components/shell';
 import { MarketSkeleton, Skeleton, SkeletonGroup } from '@/components/skeleton';
+import { HomeFooter } from '@/components/home-footer';
 
 // : two stacked cards exactly as tall as their text (category, 3 title lines, meta), and a lead
 // as tall as both plus the gap between them. The skeletons share these classes, so nothing moves when the articles arrive.
@@ -143,11 +144,7 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <footer className={`${ui.wrap} flex items-center gap-[35px] border-t border-solid border-primary/30 py-[30px] text-[11px] text-primary/80 max-[850px]:flex-wrap max-[560px]:gap-[18px] max-[560px]:pb-[85px]`}>
-        <Link className="mr-auto font-editorial text-2xl leading-none tracking-[0.08em] text-primary" href="/">FINSIGHT</Link>
-        <span>© 2026 Finsight</span>
-        <p className="max-[850px]:w-full">Dữ liệu thị trường và tin tức được cập nhật từ các nguồn đã thu thập.</p>
-      </footer>
+      <HomeFooter note="Dữ liệu thị trường và tin tức được cập nhật từ các nguồn đã thu thập." />
     </div>
   );
 }

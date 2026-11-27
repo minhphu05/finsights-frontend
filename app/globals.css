@@ -9,7 +9,7 @@
   }
   --color-primary: #3d2418;
   --color-background: #fffcfa;
-  --color-ink: #fff1e6;
+  --color-ink: #fff8f3;
   --color-foreground: #2e1c13;
   --color-market-accent: #c2410c;
   --color-accent: #d9430a;
@@ -4161,4 +4161,17 @@ button:not(:disabled):hover svg:is(.lucide-arrow-right, .lucide-arrow-up-right):
 html:not([data-theme='dark']) video[data-hero-image] {
   filter: invert(1) hue-rotate(180deg) saturate(0.85) !important;
   mix-blend-mode: multiply;
+}
+
+/* Admin console: its neutral foreground tints turn into light orange ones, like the admin sign-in page. Scoped on body so portalled menus match too. */
+body:has([data-admin]) {
+  :is(.bg-foreground\/5, .hover\:bg-foreground\/5:hover) { background-color: color-mix(in srgb, var(--color-accent) 6%, transparent); }
+  :is(.bg-foreground\/10, .hover\:bg-foreground\/10:hover:not(:disabled), .data-\[highlighted\]\:bg-foreground\/10[data-highlighted]) { background-color: color-mix(in srgb, var(--color-accent) 11%, transparent); }
+  :is(.border-foreground\/10, .border-foreground\/15, .border-foreground\/20) { border-color: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+  :is(.border-foreground\/25, .border-foreground\/30, .border-foreground\/35, .border-foreground\/40) { border-color: color-mix(in srgb, var(--color-accent) 42%, transparent); }
+  :is(.border-foreground, .border-foreground\/70, .focus\:border-foreground:focus) { border-color: var(--color-accent); }
+  .bg-foreground.text-background { background-color: var(--color-accent); color: #fff; }
+  .bg-foreground\/55 { background-color: color-mix(in srgb, var(--color-accent) 55%, transparent); }
+  [aria-current="page"] { color: var(--color-market-accent); }
+  [data-admin] :focus-visible { outline-color: var(--color-accent); }
 }
