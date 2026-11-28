@@ -149,6 +149,52 @@ export async function deleteProviderKeyAction(provider: string): Promise<ActionR
   return callAiService<null>(`/admin/keys/${encodeURIComponent(provider)}`, { method: 'DELETE' });
 }
 
+// Retrieval benchmark of the AI service. A run takes minutes: start it, then poll it by id.
+export type EvalOption = { id: string; configured: boolean };
+export type EvalOptions = { embeddings: EvalOption[]; reranks: EvalOption[]; decisions: EvalOption[] };
+export type EvalCase = { id?: string; category?: string; question: string; query?: string; date_from: string; date_to: string; relevant: string[]; irrelevant?: string[]; evidence?: string[] };
+export type EvalRequest = { dataset: string; embedding: string; rerank: string; decision: string; cases: EvalCase[] };
+export type EvalScores = Record<string, number | null> & { cases: number; 'unjudged@10': number };
+export type EvalUsage = { model: string; calls: number; input_tokens: number; output_tokens: number; estimated: boolean; cost_usd: number | null };
+// `cost_usd` is null when a model used has no price.
+export type EvalSpend = { cost_usd: number | null; estimated: boolean; usage: EvalUsage[] };
+export type EvalApiRun = {
+  id: string;
+  status: 'queued' | 'running' | 'done' | 'failed' | 'interrupted';
+  created_at: string;
+  finished_at: string | null;
+  dataset: string;
+  embedding: string;
+  rerank: string;
+  decision: string;
+  progress: { done: number; total: number };
+  // Time and cost are missing on runs made before they were recorded.
+  seconds: number | null;
+  load_seconds: number | null;
+  spend: EvalSpend | null;
+  results: { id: string; overall: EvalScores; byCategory: Record<string, EvalScores>; seconds: number | null; seconds_per_case: number | null; spend: EvalSpend | null }[];
+  skipped: { id: string; reason: string }[];
+  failed: { id: string; reason: string }[];
+  error: string | null;
+};
+
+export async function evalOptionsAction(): Promise<ActionResult<EvalOptions>> {
+  return callAiService<EvalOptions>('/admin/evals/options');
+}
+
+export async function startEvalRunAction(request: EvalRequest): Promise<ActionResult<EvalApiRun>> {
+  return callAiService<EvalApiRun>('/admin/evals/retrieval', { method: 'POST', body: JSON.stringify(request) });
+}
+
+export async function getEvalRunAction(id: string): Promise<ActionResult<EvalApiRun>> {
+  return callAiService<EvalApiRun>(`/admin/evals/retrieval/${encodeURIComponent(id)}`);
+}
+
+export async function listEvalRunsAction(): Promise<ActionResult<EvalApiRun[]>> {
+  const result = await callAiService<{ runs: EvalApiRun[] }>('/admin/evals/retrieval');
+  return result.ok ? { ok: true, data: result.data.runs } : result;
+}
+
 export async function providersHealthAction(): Promise<ActionResult<ProvidersHealth>> {
   return callAiService<ProvidersHealth>('/health/providers');
 }

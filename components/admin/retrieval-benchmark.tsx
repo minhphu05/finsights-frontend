@@ -1,21 +1,25 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FileJson2, Upload, X } from 'lucide-react';
 import RetrievalHistory from './retrieval-history';
+import RunResults, { fromApi } from './retrieval-results';
+import { evalOptionsAction, getEvalRunAction, startEvalRunAction, type EvalApiRun, type EvalCase, type EvalOption, type EvalOptions } from '@/lib/admin-actions';
 import { AdminSelect, PageHeader, Segmented, button, buttonSolid, download, panel } from './ui';
 
-// Models of finsights-ai-service/configs/models.yaml and app/integrations/jev. No API lists them yet.
 const NONE = 'none';
-const EMBEDDINGS = [['voyage-4', 'voyage-4'], ['bge-m3', 'bge-m3']] as const;
-const RERANKS = [['rerank-3', 'rerank-3'], [NONE, 'Không dùng']] as const;
-const DECISIONS = [['jev-1.14.0', 'jev-1.14.0'], [NONE, 'Không dùng']] as const;
+const NOT_USED = [NONE, 'Không dùng'] as const;
+// Server actions refuse bodies over 1 MB.
+const MAX_REQUEST_BYTES = 900 * 1024;
 const SAMPLE = [{ id: 'sample-1', question: 'Chuyên gia nhận định thế nào về chu kỳ lãi suất cao trong tháng 9/2026?', query: 'chu kỳ lãi suất cao', date_from: '2026-09-01', date_to: '2026-09-30', relevant: ['<article_uid>'] }];
 
-type Question = { question: string };
+const isDate = (value: unknown): value is string => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+const isTexts = (value: unknown): value is string[] => Array.isArray(value) && value.every((v) => typeof v === 'string');
+const choices = (options: EvalOption[]) => options.map(({ id, configured }) => [id, configured ? id : `${id} (chưa có API key)`] as const);
+const firstReady = (options: EvalOption[]) => options.find((o) => o.configured)?.id;
 
 /** Reads a JSON array, `{ "questions": [...] }`, or JSON Lines like the eval datasets. */
-function readQuestions(text: string): Question[] {
+function readQuestions(text: string): EvalCase[] {
   let value: unknown;
   try { value = JSON.parse(text); }
   catch {
@@ -30,20 +34,73 @@ function readQuestions(text: string): Question[] {
   if (!rows.length) throw new Error('File chưa có câu hỏi nào.');
   if (rows.length > 1000) throw new Error('Một tập dữ liệu tối đa 1.000 câu hỏi.');
   return rows.map((row, index) => {
-    const question = (row as { question?: unknown } | null)?.question;
-    if (typeof question !== 'string' || !question.trim()) throw new Error(`Câu hỏi ${index + 1} cần có trường question dạng chuỗi.`);
-    return { question: question.trim() };
+    const { id, category, question, query, date_from, date_to, relevant, irrelevant, evidence } = (row ?? {}) as Record<string, unknown>;
+    const need = (what: string) => new Error(`Câu hỏi ${index + 1} cần có ${what}.`);
+    if (typeof question !== 'string' || !question.trim()) throw need('trường question dạng chuỗi');
+    if (!isDate(date_from) || !isDate(date_to)) throw need('date_from và date_to dạng YYYY-MM-DD');
+    if (!isTexts(relevant) || !relevant.length) throw need('relevant là danh sách article_uid');
+    return {
+      question: question.trim(), date_from, date_to, relevant,
+      ...(typeof id === 'string' && { id }),
+      ...(typeof category === 'string' && { category }),
+      ...(typeof query === 'string' && { query }),
+      ...(isTexts(irrelevant) && { irrelevant }),
+      ...(isTexts(evidence) && { evidence }),
+    };
   });
 }
 
 function NewRun() {
-  const [dataset, setDataset] = useState<{ name: string; questions: Question[] } | null>(null);
+  const [dataset, setDataset] = useState<{ name: string; questions: EvalCase[] } | null>(null);
   const [error, setError] = useState('');
   const [dragging, setDragging] = useState(false);
-  const [embedding, setEmbedding] = useState<string>(EMBEDDINGS[0][0]);
-  const [rerank, setRerank] = useState<string>(RERANKS[0][0]);
-  const [decision, setDecision] = useState<string>(DECISIONS[0][0]);
+  const [options, setOptions] = useState<EvalOptions | null>(null);
+  const [embedding, setEmbedding] = useState('');
+  const [rerank, setRerank] = useState<string>(NONE);
+  const [decision, setDecision] = useState<string>(NONE);
+  const [starting, setStarting] = useState(false);
+  const [run, setRun] = useState<EvalApiRun | null>(null);
+  const [runError, setRunError] = useState('');
   const file = useRef<HTMLInputElement>(null);
+  const running = run?.status === 'queued' || run?.status === 'running';
+
+  useEffect(() => {
+    void evalOptionsAction().then((result) => {
+      if (!result.ok) return setRunError(result.message);
+      setOptions(result.data);
+      setEmbedding(firstReady(result.data.embeddings) ?? result.data.embeddings[0]?.id ?? '');
+      setRerank(firstReady(result.data.reranks) ?? NONE);
+      setDecision(firstReady(result.data.decisions) ?? NONE);
+    });
+  }, []);
+
+  // Polls the run until it ends; a failed request is tried again.
+  useEffect(() => {
+    if (!run || !running) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    async function poll(id: string) {
+      const result = await getEvalRunAction(id);
+      if (stopped) return;
+      if (result.ok) { setRunError(''); return setRun(result.data); }
+      setRunError(result.message);
+      timer = setTimeout(() => void poll(id), 5000);
+    }
+    timer = setTimeout(() => void poll(run.id), 3000);
+    return () => { stopped = true; clearTimeout(timer); };
+  }, [run, running]);
+
+  async function start() {
+    if (!dataset) return;
+    setRunError('');
+    const request = { dataset: dataset.name, embedding, rerank, decision, cases: dataset.questions };
+    if (new Blob([JSON.stringify(request)]).size > MAX_REQUEST_BYTES) return setRunError('Bộ câu hỏi quá lớn để gửi một lần (tối đa khoảng 900 KB). Hãy chia nhỏ.');
+    setStarting(true);
+    setRun(null);
+    const result = await startEvalRunAction(request);
+    setStarting(false);
+    if (result.ok) setRun(result.data); else setRunError(result.message);
+  }
 
   async function load(picked?: File) {
     if (!picked) return;
@@ -72,14 +129,16 @@ function NewRun() {
         </div>
       )}
       <div className="mt-5 grid gap-4 md:grid-cols-3">
-        <AdminSelect label="Model embedding" value={embedding} options={EMBEDDINGS} onChange={setEmbedding} />
-        <AdminSelect label="Model rerank" value={rerank} options={RERANKS} onChange={setRerank} />
-        <AdminSelect label="Model quyết định" value={decision} options={DECISIONS} onChange={setDecision} />
+        <AdminSelect label="Model embedding" value={embedding} options={choices(options?.embeddings ?? [])} onChange={setEmbedding} />
+        <AdminSelect label="Model rerank" value={rerank} options={[...choices(options?.reranks ?? []), NOT_USED]} onChange={setRerank} />
+        <AdminSelect label="Model quyết định" value={decision} options={[...choices(options?.decisions ?? []), NOT_USED]} onChange={setDecision} />
       </div>
       <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
-        <span className="text-[11px] text-foreground/60">Chưa có API chạy benchmark từ trang admin.</span>
-        <button type="button" className={buttonSolid} disabled>Chạy benchmark</button>
+        <span className="text-[11px] text-foreground/60" aria-live="polite">{running ? `${run.status === 'queued' ? 'Đang chờ' : 'Đang chạy'} ${run.progress.done}/${run.progress.total}` : 'Chạy benchmark gọi API trả phí của các model đã chọn.'}</span>
+        <button type="button" className={buttonSolid} disabled={!dataset || !embedding || starting || running} onClick={() => void start()}>{starting || running ? 'Đang chạy…' : 'Chạy benchmark'}</button>
       </div>
+      {(runError || run?.error) && <p role="alert" className="mt-3 mb-0 text-xs text-red-800 dark:text-red-300">{runError || run?.error}</p>}
+      {run && !running && <RunResults item={fromApi(run)} />}
     </section>
   );
 }

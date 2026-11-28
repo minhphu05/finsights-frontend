@@ -5,14 +5,15 @@ import { Check, Copy, Download } from 'lucide-react';
 import StockTableHighlight from '../stock-table-highlight';
 import { workbook, type Cell } from './agent-benchmark';
 import { AdminSelect, Badge, Segmented, button, download, panel, td, th } from './ui';
+import type { EvalApiRun, EvalSpend } from '@/lib/admin-actions';
 
 export type Metric = 'hit@5' | 'mrr@10' | 'precision@5' | 'evidence@5';
 export type Scores = Partial<Record<Metric, number | null>> & { cases: number; 'unjudged@10': number; 'chars@5'?: number };
-export type Run = { id: string; overall: Scores; byCategory: Record<string, Scores> };
+export type Run = { id: string; overall: Scores; byCategory: Record<string, Scores>; seconds?: number | null; seconds_per_case?: number | null; spend?: EvalSpend | null };
 
 // The strategies compared here. `id` is the retriever of evals.runners.retrieval; one without a result has not been run.
 export const STRATEGIES = [
-  { id: 'dense', name: 'dense', about: 'Voyage embedding trên tóm tắt' },
+  { id: 'dense', name: 'dense', about: 'Embedding trên chunk' },
   { id: 'like', name: 'like', about: 'SQL LIKE trên tiêu đề và tóm tắt' },
   { id: 'bm25', name: 'bm25', about: 'Từ khóa BM25 trên chunk' },
   { id: 'hybrid', name: 'hybrid', about: 'BM25 + dense, gộp bằng RRF' },
@@ -25,7 +26,32 @@ export const STRATEGIES = [
 ];
 
 /** One question set evaluated at one moment, with the results of every strategy. */
-export type EvalRun = { id: string; dataset: string; when: string; embedding: string; rerank: string; decision: string; sample: boolean; results: Run[] };
+// `live`: run by the AI service. `notes`: why a strategy has no result.
+export type EvalRun = { id: string; dataset: string; when: string; embedding: string; rerank: string; decision: string; sample: boolean; results: Run[]; live?: boolean; notes?: Record<string, string>; seconds?: number | null; loadSeconds?: number | null; spend?: EvalSpend | null };
+
+export const duration = (v?: number | null) => {
+  if (v === null || v === undefined) return '—';
+  if (v < 60) return `${v.toLocaleString('vi-VN', { maximumFractionDigits: v < 1 ? 3 : 1 })} giây`;
+  const total = Math.round(v);
+  return `${Math.floor(total / 60)} phút ${total % 60} giây`;
+};
+/** `≈` marks a cost built on estimated token counts. */
+export const money = (spend?: EvalSpend | null) => {
+  if (!spend) return '—';
+  if (spend.cost_usd === null) return 'chưa có giá';
+  return `${spend.estimated ? '≈ ' : ''}$${spend.cost_usd.toLocaleString('en-US', { maximumFractionDigits: 6 })}`;
+};
+
+export function fromApi(run: EvalApiRun): EvalRun {
+  const model = (id: string) => (id === 'none' ? 'Không dùng' : id);
+  return {
+    id: run.id, dataset: run.dataset, when: new Date(run.created_at).toLocaleString('vi-VN'),
+    embedding: run.embedding, rerank: model(run.rerank), decision: model(run.decision), sample: false, live: true,
+    results: run.results,
+    seconds: run.seconds, loadSeconds: run.load_seconds, spend: run.spend,
+    notes: Object.fromEntries([...run.skipped.map((s) => [s.id, `Bỏ qua: ${s.reason}`]), ...run.failed.map((f) => [f.id, `Lỗi: ${f.reason}`])]),
+  };
+}
 
 const BASELINE = 'like'; // search_news in production still matches with SQL LIKE.
 export const METRICS = [['mrr@10', 'MRR@10'], ['hit@5', 'Hit@5'], ['precision@5', 'Precision@5'], ['evidence@5', 'Evidence@5']] as const;
@@ -49,14 +75,21 @@ export function exportRun(item: EvalRun) {
     ['Finsight · Benchmark truy xuất'],
     ...(item.sample ? [['LƯU Ý', 'Dữ liệu mẫu, không phải kết quả chạy thật']] : []),
     ['Bộ câu hỏi', item.dataset], ['Thời gian chạy', item.when], ['Model embedding', item.embedding], ['Model rerank', item.rerank], ['Model quyết định', item.decision], [],
-    ['Chiến lược', 'Cách làm', 'Trạng thái', ...heads, 'Ký tự@5', 'Chưa chấm'],
-    ...rows.map(({ name, about, run }): Cell[] => (run ? [name, about, 'Đã chạy', ...METRICS.map(([key]) => score(run.overall[key])), run.overall['chars@5'] ?? '', run.overall['unjudged@10']] : [name, about, 'Chưa chạy'])),
+    ['Chiến lược', 'Cách làm', 'Trạng thái', ...heads, 'Ký tự@5', 'Chưa chấm', 'Thời gian (giây)', 'Giây/câu', 'Chi phí (USD)'],
+    ...rows.map(({ id, name, about, run }): Cell[] => (run ? [name, about, 'Đã chạy', ...METRICS.map(([key]) => score(run.overall[key])), run.overall['chars@5'] ?? '', run.overall['unjudged@10'], run.seconds ?? '', run.seconds_per_case ?? '', run.spend ? run.spend.cost_usd ?? 'chưa có giá' : ''] : [name, about, item.notes?.[id] ?? 'Chưa chạy'])),
   ];
   const byCategory: Cell[][] = [
     ['Chiến lược', 'Loại câu hỏi', 'Số câu', ...heads],
     ...rows.flatMap(({ name, run }) => Object.entries(run?.byCategory ?? {}).map(([category, scores]): Cell[] => [name, category, scores.cases, ...METRICS.map(([key]) => score(scores[key]))])),
   ];
-  const bytes = workbook([{ name: 'Tổng quan', rows: summary }, { name: 'Theo loại câu hỏi', rows: byCategory }]);
+  const spending: Cell[][] = [
+    ['Cả lần chạy (thực tế)'],
+    ['Thời gian (giây)', item.seconds ?? ''], ['Nạp dữ liệu (giây)', item.loadSeconds ?? ''],
+    ['Chi phí (USD)', item.spend ? item.spend.cost_usd ?? 'chưa có giá' : ''], ['Token ước tính', item.spend?.estimated ? 'Có' : 'Không'], [],
+    ['Model', 'Số lượt gọi', 'Token input', 'Token output', 'Chi phí (USD)'],
+    ...(item.spend?.usage ?? []).map((u): Cell[] => [u.model, u.calls, u.input_tokens, u.output_tokens, u.cost_usd ?? 'chưa có giá']),
+  ];
+  const bytes = workbook([{ name: 'Tổng quan', rows: summary }, { name: 'Theo loại câu hỏi', rows: byCategory }, ...(item.spend ? [{ name: 'Thời gian và chi phí', rows: spending }] : [])]);
   download(`finsight-retrieval-${item.sample ? 'sample-' : ''}${item.id}.xlsx`, bytes.buffer as ArrayBuffer, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
 
@@ -68,15 +101,25 @@ export default function RunResults({ item }: { item: EvalRun }) {
   // Strategies that have not run sort last.
   const ranked = [...rows].sort((a, b) => (b.run?.overall[metric] ?? -1) - (a.run?.overall[metric] ?? -1));
   const measured = rows.flatMap((row) => (row.run ? [{ ...row, run: row.run }] : []));
-  const baseline = measured.find((row) => row.id === BASELINE)!;
-  const selected = measured.find((row) => row.id === selectedId) ?? baseline;
-  const categories = Object.keys(baseline.run.byCategory);
+  // A live run has no `like` result when the AI service has no MySQL.
+  const baseline = measured.find((row) => row.id === BASELINE);
+  const selected = measured.find((row) => row.id === selectedId) ?? baseline ?? measured[0];
+  const categories = Object.keys(selected?.run.byCategory ?? {});
   const label = METRICS.find(([id]) => id === metric)![1];
-  const delta = ((selected.run.overall[metric] ?? 0) - (baseline.run.overall[metric] ?? 0)) * 100;
-  const command = `uv run --env-file .env python -m evals.runners.retrieval --retriever ${selected.id} --dataset evals/datasets/news_topics_v2.jsonl`;
+  const delta = ((selected?.run.overall[metric] ?? 0) - (baseline?.run.overall[metric] ?? 0)) * 100;
+  const command = `uv run --env-file .env python -m evals.runners.retrieval --retriever ${selected?.id} --dataset evals/datasets/news_topics_v2.jsonl`;
 
   async function copy() {
     try { await navigator.clipboard.writeText(command); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {}
+  }
+
+  if (!selected) {
+    return (
+      <section className={`${panel} mt-5 p-5 text-xs leading-6`}>
+        <p className="m-0">Lần chạy này chưa có kết quả nào.</p>
+        <ul className="mt-2 mb-0 pl-5 text-foreground/70">{rows.map(({ id, name }) => item.notes?.[id] && <li key={id}><span className="font-mono">{name}</span>: {item.notes[id]}</li>)}</ul>
+      </section>
+    );
   }
 
   return (
@@ -89,19 +132,27 @@ export default function RunResults({ item }: { item: EvalRun }) {
         </div>
       </div>
 
+      {item.spend && (
+        <div className={`${panel} mt-4 p-4 text-xs leading-6`}>
+          <p className="m-0">Cả lần chạy: <strong className="font-medium">{duration(item.seconds)}</strong> (nạp dữ liệu {duration(item.loadSeconds)}), chi phí thực tế <strong className="font-medium">{money(item.spend)}</strong>.</p>
+          {item.spend.usage.length > 0 && <ul className="mt-2 mb-0 pl-5 text-foreground/70">{item.spend.usage.map((u) => <li key={u.model}><span className="font-mono">{u.model}</span>: {u.calls.toLocaleString('vi-VN')} lượt, {u.input_tokens.toLocaleString('vi-VN')} token input, {u.output_tokens.toLocaleString('vi-VN')} token output, {money({ cost_usd: u.cost_usd, estimated: u.estimated, usage: [] })}</li>)}</ul>}
+          <p className="mt-2 mb-0 text-foreground/60">Chi phí từng chiến lược trong bảng tính như khi chạy riêng, nên tổng của chúng có thể lớn hơn chi phí thực tế. Chỉ tính phần gọi model khi đo, không gồm embedding dữ liệu lúc nạp.</p>
+        </div>
+      )}
+
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Segmented label="Chỉ số xếp hạng" value={metric} options={METRICS} onChange={setMetric} />
         <p className="m-0 min-w-[240px] flex-1 text-xs leading-5 text-foreground/65">{HELP[metric]}</p>
       </div>
 
       <p className="mt-5 mb-0 text-[15px] leading-7" aria-live="polite">
-        <strong className="font-medium">{selected.name}</strong> đạt {label} {percent(selected.run.overall[metric])}, {selected.id === BASELINE ? 'đây là mốc production.' : <>so với <strong className="font-medium">like</strong> (production) {percent(baseline.run.overall[metric])}: <span className={delta >= 0 ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}>{delta >= 0 ? '+' : '−'}{Math.abs(delta).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} điểm</span>.</>}
+        <strong className="font-medium">{selected.name}</strong> đạt {label} {percent(selected.run.overall[metric])}{!baseline ? '.' : selected.id === BASELINE ? ', đây là mốc production.' : <>, so với <strong className="font-medium">like</strong> (production) {percent(baseline.run.overall[metric])}: <span className={delta >= 0 ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}>{delta >= 0 ? '+' : '−'}{Math.abs(delta).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} điểm</span>.</>}
       </p>
 
       <div className={`${panel} mt-4 overflow-x-auto`}>
         <StockTableHighlight attribute="data-row">
-        <table className="relative z-10 w-full min-w-[820px] border-collapse text-xs">
-          <thead className="border-b border-foreground/20"><tr><th className={th}>Chiến lược</th><th className={`${th} w-[30%]`}>{label}</th>{METRICS.filter(([id]) => id !== metric).map(([id, text]) => <th key={id} className={`${th} text-right`}>{text}</th>)}<th className={`${th} text-right`} title="Số ký tự trung bình đưa cho model trong top 5">Ký tự@5</th><th className={`${th} text-right`} title="Bài trả về trong top 10 chưa được chấm liên quan">Chưa chấm</th></tr></thead>
+        <table className={`relative z-10 w-full ${item.spend ? 'min-w-[1000px]' : 'min-w-[820px]'} border-collapse text-xs`}>
+          <thead className="border-b border-foreground/20"><tr><th className={th}>Chiến lược</th><th className={`${th} w-[30%]`}>{label}</th>{METRICS.filter(([id]) => id !== metric).map(([id, text]) => <th key={id} className={`${th} text-right`}>{text}</th>)}<th className={`${th} text-right`} title="Số ký tự trung bình đưa cho model trong top 5">Ký tự@5</th><th className={`${th} text-right`} title="Bài trả về trong top 10 chưa được chấm liên quan">Chưa chấm</th>{item.spend && <><th className={`${th} text-right`} title="Thời gian trung bình mỗi câu, tính như khi chạy riêng">Thời gian/câu</th><th className={`${th} text-right`} title="Chi phí cả bộ câu hỏi, tính như khi chạy riêng">Chi phí</th></>}</tr></thead>
           <tbody>
             {ranked.map(({ id, name, about, run }) => {
               const value = run?.overall[metric];
@@ -114,7 +165,8 @@ export default function RunResults({ item }: { item: EvalRun }) {
                     {METRICS.filter(([key]) => key !== metric).map(([key]) => <td key={key} className={`${td} text-right tabular-nums`}>{percent(run.overall[key])}</td>)}
                     <td className={`${td} text-right tabular-nums`}>{run.overall['chars@5']?.toLocaleString('vi-VN') ?? '—'}</td>
                     <td className={`${td} text-right tabular-nums`}>{run.overall['unjudged@10']}</td>
-                  </> : <td colSpan={6} className={`${td} text-right`}>Chưa chạy</td>}
+                    {item.spend && <><td className={`${td} text-right whitespace-nowrap tabular-nums`}>{duration(run.seconds_per_case)}</td><td className={`${td} text-right whitespace-nowrap tabular-nums`}>{money(run.spend)}</td></>}
+                  </> : <td colSpan={item.spend ? 8 : 6} className={`${td} text-right`}>{item.notes?.[id] ?? 'Chưa chạy'}</td>}
                 </tr>
               );
             })}
@@ -128,21 +180,21 @@ export default function RunResults({ item }: { item: EvalRun }) {
         {metric === 'evidence@5' && <p className="mt-2 mb-0 text-xs text-foreground/65">Chỉ nhóm detail có chỉ số này, các nhóm khác hiển thị “—”.</p>}
         <div className={`${panel} mt-3 overflow-x-auto`}>
           <table className="w-full min-w-[720px] border-collapse text-xs tabular-nums">
-            <thead className="border-b border-foreground/20"><tr><th className={th}>Chiến lược</th>{categories.map((c) => <th key={c} className={`${th} text-right`}>{c} <span className="text-foreground/50">({baseline.run.byCategory[c].cases})</span></th>)}</tr></thead>
+            <thead className="border-b border-foreground/20"><tr><th className={th}>Chiến lược</th>{categories.map((c) => <th key={c} className={`${th} text-right`}>{c} <span className="text-foreground/50">({selected.run.byCategory[c].cases})</span></th>)}</tr></thead>
             <tbody>{ranked.map(({ id, name, run }) => <tr key={id} onClick={run ? () => setSelectedId(id) : undefined} className={`border-b border-foreground/10 last:border-b-0 ${run ? 'cursor-pointer' : 'text-foreground/60'}`}><th scope="row" className={`px-3 py-2 text-left font-mono font-normal whitespace-nowrap ${id === selected.id ? 'bg-foreground text-background' : ''}`}>{name}</th>{categories.map((c) => <td key={c} className="px-3 py-2 text-right" style={heat(run?.byCategory[c]?.[metric])}>{percent(run?.byCategory[c]?.[metric])}</td>)}</tr>)}</tbody>
           </table>
         </div>
       </section>
 
-      <section className={`${panel} mt-8 p-5`} aria-labelledby="rerun">
+      {!item.live && <section className={`${panel} mt-8 p-5`} aria-labelledby="rerun">
         <h2 id="rerun" className="m-0 text-[15px] font-medium">Chạy lại trên máy</h2>
-        <p className="mt-2 mb-0 text-xs leading-6 text-foreground/70">Chưa có API chạy benchmark từ trang admin. Chạy lệnh này trong <code>finsights-ai-service</code>; các retriever dùng embedding hoặc rerank sẽ gọi dịch vụ trả phí.</p>
+        <p className="mt-2 mb-0 text-xs leading-6 text-foreground/70">Chạy lệnh này trong <code>finsights-ai-service</code>; các retriever dùng embedding hoặc rerank sẽ gọi dịch vụ trả phí.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <div className="w-[220px]"><AdminSelect hideLabel label="Chọn retriever" value={selected.id} options={measured.map((row) => [row.id, row.name] as const)} onChange={setSelectedId} /></div>
           <code className="min-w-0 flex-1 basis-[320px] rounded-xs bg-foreground/5 px-3 py-2.5 font-mono text-[11px] overflow-hidden whitespace-nowrap">{command}</code>
           <button type="button" className={button} onClick={copy}>{copied ? <Check size={14} /> : <Copy size={14} strokeWidth={1.5} />}{copied ? 'Đã chép' : 'Chép lệnh'}</button>
         </div>
-      </section>
+      </section>}
     </section>
   );
 }
