@@ -155,6 +155,9 @@ export type EvalOptions = { embeddings: EvalOption[]; reranks: EvalOption[]; dec
 export type EvalCase = { id?: string; category?: string; question: string; query?: string; date_from: string; date_to: string; relevant: string[]; irrelevant?: string[]; evidence?: string[] };
 export type EvalRequest = { dataset: string; embedding: string; rerank: string; decision: string; cases: EvalCase[] };
 export type EvalScores = Record<string, number | null> & { cases: number; 'unjudged@10': number };
+export type EvalUsage = { model: string; calls: number; input_tokens: number; output_tokens: number; estimated: boolean; cost_usd: number | null };
+// `cost_usd` is null when a model used has no price.
+export type EvalSpend = { cost_usd: number | null; estimated: boolean; usage: EvalUsage[] };
 export type EvalApiRun = {
   id: string;
   status: 'queued' | 'running' | 'done' | 'failed' | 'interrupted';
@@ -165,7 +168,11 @@ export type EvalApiRun = {
   rerank: string;
   decision: string;
   progress: { done: number; total: number };
-  results: { id: string; overall: EvalScores; byCategory: Record<string, EvalScores> }[];
+  // Time and cost are missing on runs made before they were recorded.
+  seconds: number | null;
+  load_seconds: number | null;
+  spend: EvalSpend | null;
+  results: { id: string; overall: EvalScores; byCategory: Record<string, EvalScores>; seconds: number | null; seconds_per_case: number | null; spend: EvalSpend | null }[];
   skipped: { id: string; reason: string }[];
   failed: { id: string; reason: string }[];
   error: string | null;

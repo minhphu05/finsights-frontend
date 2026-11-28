@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Download } from 'lucide-react';
 import StockTableHighlight from '../stock-table-highlight';
 import report from './retrieval-report.json';
-import RunResults, { STRATEGIES, exportRun, fromApi, type EvalRun, type Run, type Scores } from './retrieval-results';
+import RunResults, { STRATEGIES, duration, exportRun, fromApi, money, type EvalRun, type Run, type Scores } from './retrieval-results';
 import { listEvalRunsAction, type EvalApiRun } from '@/lib/admin-actions';
 import { Badge, button, panel, td, th } from './ui';
 
@@ -77,8 +77,8 @@ export default function RetrievalHistory() {
     {error && <p role="alert" className="mt-5 mb-0 text-xs text-red-800 dark:text-red-300">Không tải được lịch sử chạy: {error}</p>}
     <div className={`${panel} mt-5 overflow-x-auto`}>
       <StockTableHighlight attribute="data-row">
-      <table className="relative z-10 w-full min-w-[860px] border-collapse text-xs tabular-nums">
-        <thead className="border-b border-foreground/20"><tr>{['Thời gian chạy', 'Bộ câu hỏi', 'Embedding', 'Rerank', 'Model quyết định'].map((label) => <th key={label} className={th}>{label}</th>)}<th className={th}><span className="sr-only">Thao tác</span></th></tr></thead>
+      <table className="relative z-10 w-full min-w-[1020px] border-collapse text-xs tabular-nums">
+        <thead className="border-b border-foreground/20"><tr>{['Thời gian chạy', 'Bộ câu hỏi', 'Embedding', 'Rerank', 'Model quyết định', 'Thời lượng', 'Chi phí'].map((label) => <th key={label} className={th}>{label}</th>)}<th className={th}><span className="sr-only">Thao tác</span></th></tr></thead>
         <tbody>{rows.map(({ item, run }) => (
           <tr key={item.id} data-row={item.id} onClick={() => setOpenId(item.id)} className="cursor-pointer border-b border-foreground/10 last:border-b-0">
             <td className={`${td} whitespace-nowrap`}><button type="button" className="mr-2 text-left text-xs text-foreground">{item.when}</button>{run && run.status !== 'done' ? <Badge tone={unfinished(run) ? 'neutral' : 'bad'}>{STATUS[run.status]}{unfinished(run) && run.progress.total > 0 && ` ${run.progress.done}/${run.progress.total}`}</Badge> : <Badge tone={item.sample ? 'warn' : 'good'}>{item.sample ? 'Mẫu' : 'Thật'}</Badge>}</td>
@@ -86,6 +86,8 @@ export default function RetrievalHistory() {
             <td className={`${td} font-mono`}>{item.embedding}</td>
             <td className={`${td} font-mono`}>{item.rerank}</td>
             <td className={`${td} font-mono`}>{item.decision}</td>
+            <td className={`${td} whitespace-nowrap`}>{duration(item.seconds)}</td>
+            <td className={`${td} whitespace-nowrap`}>{money(item.spend)}</td>
             <td className="px-3 py-2 text-right"><button type="button" className={button} disabled={!item.results.length} onClick={(e) => { e.stopPropagation(); exportRun(item); }}><Download size={14} strokeWidth={1.5} />Xuất Excel</button></td>
           </tr>
         ))}</tbody>
