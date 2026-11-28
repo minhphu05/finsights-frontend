@@ -4,32 +4,14 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Download } from 'lucide-react';
 import StockTableHighlight from '../stock-table-highlight';
 import report from './retrieval-report.json';
-import RunResults, { STRATEGIES, duration, exportRun, fromApi, money, type EvalRun, type Run, type Scores } from './retrieval-results';
+import RunResults, { duration, exportRun, fromApi, money, type EvalRun, type Run } from './retrieval-results';
 import { listEvalRunsAction, type EvalApiRun } from '@/lib/admin-actions';
 import { Badge, button, panel, td, th } from './ui';
 
-const REPORTS = report as unknown as Run[];
-const DATASETS = ['news_topics_v2', 'news_topics'] as const;
-
-// Sample runs made to design the screen; runs of the AI service are listed above them.
-// Each shifts the real report by a few points; a strategy without a report borrows a neighbour's numbers.
-const BORROW: Record<string, string> = { 'hybrid-jev80': 'jev-point80', 'hybrid-gate10': 'gate10' };
-const shifted = (scores: Scores, shift: number, cases: number): Scores => {
-  const move = (value?: number | null) => (value === null || value === undefined ? value : Math.min(1, Math.max(0, +(value + shift).toFixed(3))));
-  return { ...scores, cases, 'mrr@10': move(scores['mrr@10']), 'hit@5': move(scores['hit@5']), 'precision@5': move(scores['precision@5']), 'evidence@5': move(scores['evidence@5']) };
-};
-const sampleResults = (shift: number, share: number): Run[] => STRATEGIES.map(({ id }) => {
-  const source = REPORTS.find((result) => result.id === (BORROW[id] ?? id))!;
-  const cases = (count: number) => Math.max(1, Math.round(count * share));
-  return { id, overall: shifted(source.overall, shift, cases(source.overall.cases)), byCategory: Object.fromEntries(Object.entries(source.byCategory).map(([name, scores]) => [name, shifted(scores, shift, cases(scores.cases))])) };
-});
-
+// The report made with the CLI (finsights-ai-service/evals/reports) before the admin page could
+// start runs; it does not record model names.
 const RUNS: EvalRun[] = [
-  // The only real one: the reports in finsights-ai-service/evals/reports, which do not record model names.
-  { id: 'v2-snapshot', dataset: DATASETS[0], when: '22–24/11/2026', embedding: 'Không ghi', rerank: 'Không ghi', decision: 'Không ghi', sample: false, results: REPORTS },
-  { id: 'v2-1911', dataset: DATASETS[0], when: '19/11/2026 11:12', embedding: 'bge-m3', rerank: 'rerank-3', decision: 'jev-1.14.0', sample: true, results: sampleResults(-0.034, 1) },
-  { id: 'v1-1811', dataset: DATASETS[1], when: '18/11/2026 10:30', embedding: 'voyage-4', rerank: 'rerank-3', decision: 'jev-1.14.0', sample: true, results: sampleResults(-0.018, 0.4) },
-  { id: 'v1-1711', dataset: DATASETS[1], when: '17/11/2026 15:55', embedding: 'voyage-4', rerank: 'Không dùng', decision: 'Không dùng', sample: true, results: sampleResults(-0.041, 0.4) },
+  { id: 'v2-snapshot', dataset: 'news_topics_v2', when: '22–24/11/2026', embedding: 'Không ghi', rerank: 'Không ghi', decision: 'Không ghi', sample: false, results: report as unknown as Run[] },
 ];
 
 const STATUS: Record<EvalApiRun['status'], string> = { queued: 'Đang chờ', running: 'Đang chạy', done: 'Xong', failed: 'Thất bại', interrupted: 'Bị gián đoạn' };
